@@ -1,5 +1,12 @@
 ## TTP-DFS
 
+This repository builds upon the TTP-DFS implementation originally developed by Bas Loyen et al.:
+
+https://github.com/OdyMeister/TTP-DFS
+
+The original code is used as a foundation for experiments conducted in a Bachelor thesis at Vrije Universiteit Amsterdam under the supervision of Daan van den Berg.
+
+Additional work in this repository focuses on testing and analyzing mutation operators on Traveling Tournament Problem schedules.
 DFS pruning algorithm for finding all valid TTP schedules.
 
 ## Usage
