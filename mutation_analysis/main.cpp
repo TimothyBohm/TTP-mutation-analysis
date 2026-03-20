@@ -9,7 +9,12 @@ int main() {
 
     ScheduleSet data = read_schedules_from_file("../Schedules/Schedules_ALL/ALL-8.csv");
 
-    print_schedule_set(data, 3);
+    //print_schedule_set(data, 3);
+
+    if (!data.schedules.empty()) {
+        TeamScheduleTable table = build_team_schedule_table(data.schedules[0]);
+        print_team_schedule_table(table);
+    }
 
     return 0;
 }
