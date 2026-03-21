@@ -69,4 +69,9 @@ struct ViolationCounts {
 
 ViolationCounts evaluate_schedule(const TeamScheduleTable& table);
 
+
+//helper function for violation counting
+Schedule make_noRepeat_test_schedule();
+
+
 #endif
