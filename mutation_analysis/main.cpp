@@ -5,6 +5,8 @@
 #include <iostream>
 #include <random>
 
+#define SCHEDULE_FOLDER "../Schedules/Schedules_ALL"
+
 std::mt19937 rng(42); //reproducibility
 //std::mt19937 rng(std::random_device{}()); //complete randomness
 
@@ -21,7 +23,7 @@ int main() {
     //run_global_summary_by_team_size(data, "../Results/two_steps_global_summary_8.csv", 10, false);
 
 
-    run_global_summary_driver("../Schedules/Schedules_ALL", "../Results/two_steps_global_summary.csv", 10);
+    run_global_summary_driver(SCHEDULE_FOLDER, "../Results/two_steps_global_summary.csv", 10, {6, 8, 10, 12, 14});
 
     return 0;
 }

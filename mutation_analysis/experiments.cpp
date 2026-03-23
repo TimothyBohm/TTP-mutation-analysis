@@ -329,10 +329,9 @@ void run_global_summary_by_team_size(
 void run_global_summary_driver(
     const std::string& data_folder,
     const std::string& output_file,
-    int max_schedules
+    int max_schedules,
+    std::vector<int> team_sizes
 ) {
-    std::vector<int> team_sizes = {4, 6, 8, 10, 12, 14, 16};
-
     bool first = true;
 
     for (int n : team_sizes) {

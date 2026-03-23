@@ -30,7 +30,8 @@ void run_global_summary_by_team_size(
 void run_global_summary_driver(
     const std::string& data_folder,
     const std::string& output_file,
-    int max_schedules = -1
+    int max_schedules = -1,
+    std::vector<int> team_sizes = {6, 8, 10}
 );
 
 #endif
