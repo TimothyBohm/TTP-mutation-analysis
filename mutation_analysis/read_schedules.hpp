@@ -5,7 +5,6 @@
 #include <string>
 
 ScheduleSet read_schedules_from_file(const std::string& filename);
-
-int get_num_teams(const std::vector<Matchup>& matchups);
+void test_file_validity(ScheduleSet data);
 
 #endif

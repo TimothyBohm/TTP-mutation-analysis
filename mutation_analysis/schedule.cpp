@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <unordered_map>
+#include <set>
 
 #define MAX_STREAK 3
 
@@ -111,6 +112,16 @@ int get_num_teams(const Schedule& schedule) {
         return 0;
     }
     return static_cast<int>(schedule.rounds[0].games.size()) * 2;
+}
+
+//get number of teams from schedule
+int get_num_teams(const std::vector<Matchup>& matchups) {
+    std::set<int> teams;
+    for (const auto& m : matchups) {
+        teams.insert(m.home);
+        teams.insert(m.away);
+    }
+    return teams.size();
 }
 
 int get_num_rounds(const Schedule& schedule) {

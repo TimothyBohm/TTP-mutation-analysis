@@ -6,7 +6,7 @@
 //swap two rounds
 void round_swap(Schedule& schedule, int r1, int r2) {
     //check bounds
-    if (r1 < 0 || r2 < 0 || r1 >= schedule.rounds.size() || r2 >= schedule.rounds.size()) {
+    if (r1 < 0 || r2 < 0 || r1 >= static_cast<int>(schedule.rounds.size()) || r2 >= static_cast<int>(schedule.rounds.size())) {
         std::cerr << "Round swap indices out of bounds: " << r1 << ", " << r2 << std::endl;
         return; 
     }

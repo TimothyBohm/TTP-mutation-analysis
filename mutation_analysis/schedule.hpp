@@ -56,6 +56,7 @@ void print_table_from_schedule(const Schedule& schedule);
 //small helper functions
 int get_opponent_id(int value);
 int get_num_teams(const Schedule& schedule);
+int get_num_teams(const std::vector<Matchup>& matchups);
 int get_num_rounds(const Schedule& schedule);
 bool is_home_game(int value);
 bool is_away_game(int value);

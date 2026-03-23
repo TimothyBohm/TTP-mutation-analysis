@@ -1,0 +1,2 @@
+team_size,num_original_schedules,total_neighbors,feasible_neighbors,feasible_ratio,avg_noRepeat,avg_maxStreak,avg_doubleRoundRobin,avg_total,min_total,max_total
+8,10,25480,1090,0.0427786,1.14286,3.44969,0,4.59254,0,21

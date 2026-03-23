@@ -4,17 +4,9 @@
 #include <iostream>
 #include <set>
 
-//g number of teams from schedule
-int get_num_teams(const std::vector<Matchup>& matchups) {
-    std::set<int> teams;
-    for (const auto& m : matchups) {
-        teams.insert(m.home);
-        teams.insert(m.away);
-    }
-    return teams.size();
-}
 
 ScheduleSet read_schedules_from_file(const std::string& filename) {
+
     ScheduleSet result;
 
     std::ifstream file(filename);
@@ -75,4 +67,10 @@ ScheduleSet read_schedules_from_file(const std::string& filename) {
               << " schedules from " << filename << std::endl;
 
     return result;
+}
+
+void test_file_validity(ScheduleSet data) {
+    if (data.schedules.empty()) {
+        std::cerr << "No schedules loaded.\n";
+    }
 }
