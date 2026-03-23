@@ -2,6 +2,7 @@
 #define SCHEDULE_HPP
 
 #include <vector>
+#define MAX_STREAK 3
 
 //single game: home vs away
 struct Matchup {
@@ -48,10 +49,14 @@ void print_schedule_set(const ScheduleSet& set, int limit);
 //team table representation functions
 TeamScheduleTable build_team_schedule_table(const Schedule& schedule);
 
-void print_team_schedule_table(const TeamScheduleTable& table);
+void print_table(const TeamScheduleTable& table);
+
+void print_table_from_schedule(const Schedule& schedule);
 
 //small helper functions
 int get_opponent_id(int value);
+int get_num_teams(const Schedule& schedule);
+int get_num_rounds(const Schedule& schedule);
 bool is_home_game(int value);
 bool is_away_game(int value);
 
@@ -67,11 +72,17 @@ struct ViolationCounts {
     int total = 0;
 };
 
-ViolationCounts evaluate_schedule(const TeamScheduleTable& table);
+bool is_feasible(const ViolationCounts& v);
+
+ViolationCounts evaluate_table(const TeamScheduleTable& table);
+
+ViolationCounts evaluate_schedule(const Schedule& schedule);
 
 
 //helper function for violation counting
-Schedule make_noRepeat_test_schedule();
+Schedule make_test_schedule();
+
+ViolationCounts evaluate_schedule(const Schedule& schedule);
 
 
 #endif

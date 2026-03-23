@@ -3,6 +3,8 @@
 #include <iostream>
 #include <unordered_map>
 
+#define MAX_STREAK 3
+
 //print a single matchup
 void print_matchup(const Matchup& m) {
     std::cout << "| " << m.home << "-" << m.away << " |";
@@ -52,7 +54,7 @@ void print_schedule_set(const ScheduleSet& set, int limit) {
     }
 }
 
-// Build team-based representation from round-based schedule
+//build team-based representation from round-based schedule
 TeamScheduleTable build_team_schedule_table(const Schedule& schedule) {
     TeamScheduleTable table;
 
@@ -75,8 +77,8 @@ TeamScheduleTable build_team_schedule_table(const Schedule& schedule) {
     return table;
 }
 
-// Print team-based table
-void print_team_schedule_table(const TeamScheduleTable& table) {
+//print team-based table
+void print_table(const TeamScheduleTable& table) {
     std::cout << "========================\n";
     std::cout << "Team-based schedule table\n";
     std::cout << "========================\n";
@@ -94,9 +96,25 @@ void print_team_schedule_table(const TeamScheduleTable& table) {
     std::cout << std::endl;
 }
 
+void print_table_from_schedule(const Schedule& schedule) {
+    TeamScheduleTable table = build_team_schedule_table(schedule);
+    print_table(table);
+}
+
 //additional helper functions
 int get_opponent_id(int value) {
     return std::abs(value) - 1;
+}
+
+int get_num_teams(const Schedule& schedule) {
+    if (schedule.rounds.empty()) {
+        return 0;
+    }
+    return static_cast<int>(schedule.rounds[0].games.size()) * 2;
+}
+
+int get_num_rounds(const Schedule& schedule) {
+    return static_cast<int>(schedule.rounds.size());
 }
 
 bool is_home_game(int value) {
@@ -139,7 +157,7 @@ int count_maxStreak_violations(const TeamScheduleTable& table) {
             if (same_location) {
                 current_streak++;
 
-                if (current_streak > 3) {
+                if (current_streak > MAX_STREAK) {
                     violations++;
                 }
             } else {
@@ -148,8 +166,7 @@ int count_maxStreak_violations(const TeamScheduleTable& table) {
         }
     }
 
-    //each violation is counted twice, 1 for each team, so i divide by 2 to get the correct count
-    return violations/2; 
+    return violations; 
 }
 
 int count_double_round_robin_violations(const TeamScheduleTable& table) {
@@ -190,7 +207,11 @@ int count_double_round_robin_violations(const TeamScheduleTable& table) {
     return violations/2;
 }
 
-ViolationCounts evaluate_schedule(const TeamScheduleTable& table) {
+bool is_feasible(const ViolationCounts& v) {
+    return v.noRepeat == 0 && v.maxStreak == 0 && v.doubleRoundRobin == 0;
+}
+
+ViolationCounts evaluate_table(const TeamScheduleTable& table) {
     ViolationCounts result;
 
     result.noRepeat = count_noRepeat_violations(table);
@@ -202,39 +223,73 @@ ViolationCounts evaluate_schedule(const TeamScheduleTable& table) {
     return result;
 }
 
-Schedule make_noRepeat_test_schedule() {
+ViolationCounts evaluate_schedule(const Schedule& schedule){
+    TeamScheduleTable table = build_team_schedule_table(schedule);
+    return evaluate_table(table);
+}
+
+Schedule make_test_schedule() {
     Schedule s;
 
     Round r0;
     r0.games.push_back({0, 1});
     r0.games.push_back({2, 3});
+    r0.games.push_back({4, 5});
     s.rounds.push_back(r0);
 
     Round r1;
     r1.games.push_back({0, 2});
-    r1.games.push_back({1, 3});
+    r1.games.push_back({1, 4});
+    r1.games.push_back({3, 5});
     s.rounds.push_back(r1);
 
     Round r2;
-    r2.games.push_back({2, 0});
-    r2.games.push_back({3, 1});
+    r2.games.push_back({0, 3});
+    r2.games.push_back({1, 5});
+    r2.games.push_back({2, 4});
     s.rounds.push_back(r2);
 
     Round r3;
-    r3.games.push_back({0, 3});
-    r3.games.push_back({2, 1});
+    r3.games.push_back({0, 4});
+    r3.games.push_back({1, 2});
+    r3.games.push_back({3, 5});
     s.rounds.push_back(r3);
 
     Round r4;
-    r4.games.push_back({3, 0});
-    r4.games.push_back({1, 2});
+    r4.games.push_back({5, 0});
+    r4.games.push_back({3, 1});
+    r4.games.push_back({4, 2});
     s.rounds.push_back(r4);
 
     Round r5;
     r5.games.push_back({1, 0});
     r5.games.push_back({3, 2});
+    r5.games.push_back({5, 4});
     s.rounds.push_back(r5);
 
+    Round r6;
+    r6.games.push_back({2, 0});
+    r6.games.push_back({4, 1});
+    r6.games.push_back({5, 3});
+    s.rounds.push_back(r6);
+
+    Round r7;
+    r7.games.push_back({3, 0});
+    r7.games.push_back({2, 1});
+    r7.games.push_back({4, 5});
+    s.rounds.push_back(r7);
+
+    Round r8;
+    r8.games.push_back({4, 0});
+    r8.games.push_back({5, 1});
+    r8.games.push_back({2, 3});
+    s.rounds.push_back(r8);
+
+    Round r9;
+    r9.games.push_back({0, 5});
+    r9.games.push_back({1, 3});
+    r9.games.push_back({2, 4});
+    s.rounds.push_back(r9);
 
     return s;
 }
