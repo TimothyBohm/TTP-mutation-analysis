@@ -2,7 +2,8 @@
 #define MUTATIONS_HPP
 
 #include "schedule.hpp"
-#include "random"
+#include <random>
+#include <string>
 
 struct HomeAwayNeighbor {
     int teamA;
@@ -16,6 +17,11 @@ struct RoundSwapNeighbor {
     Schedule schedule;
 };
 
+enum MutationType {
+    HOME_AWAY_SWAP_MUTATION,
+    ROUND_SWAP_MUTATION
+};
+
 // Swap two rounds
 void round_swap(Schedule& schedule, int r1, int r2);
 void round_swap_consecutive(Schedule& schedule, int r);
@@ -27,5 +33,7 @@ void home_away_swap_random(Schedule& schedule, std::mt19937& rng);
 
 std::vector<HomeAwayNeighbor> generate_home_away_neighbors(const Schedule& schedule);
 std::vector<RoundSwapNeighbor> generate_round_swap_neighbors(const Schedule& schedule);
+
+std::string mutation_type_to_string(MutationType type);
 
 #endif
