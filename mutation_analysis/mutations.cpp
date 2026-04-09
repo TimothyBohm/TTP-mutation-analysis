@@ -106,3 +106,14 @@ std::vector<RoundSwapNeighbor> generate_round_swap_neighbors(const Schedule& sch
 
     return neighbors;
 }
+
+std::string mutation_type_to_string(MutationType type) {
+    switch (type) {
+        case HOME_AWAY_SWAP_MUTATION:
+            return "home_away_swap";
+        case ROUND_SWAP_MUTATION:
+            return "round_swap";
+        default:
+            return "unknown";
+    }
+}
