@@ -3,6 +3,7 @@
 
 #include "schedule.hpp"
 #include <string>
+#include <vector>
 
 //one line per neighbor schedule, with details about the mutation and its violations
 void run_nested_neighborhood_experiment(
@@ -32,6 +33,130 @@ void run_global_summary_driver(
     const std::string& output_file,
     int max_schedules = -1,
     std::vector<int> team_sizes = {6, 8, 10}
+);
+
+void run_one_step_home_away_experiment(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1
+);
+
+void run_one_step_round_swap_experiment(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1
+);
+
+// Driver for selected team sizes
+void run_one_step_experiments_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    int max_schedules = -1,
+    const std::vector<int>& team_sizes = {8}
+);
+
+// New: 2-step home/away -> home/away
+void run_two_step_home_away_experiment(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1
+);
+
+// New: 2-step round swap -> round swap
+void run_two_step_round_swap_experiment(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1
+);
+
+// New: driver for selected team sizes
+void run_two_step_experiments_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    int max_schedules = -1
+);
+
+// Global summaries: 1-step
+void run_global_summary_one_step_home_away(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1,
+    bool append = false
+);
+
+void run_global_summary_one_step_round_swap(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1,
+    bool append = false
+);
+
+// Global summaries: 2-step
+void run_global_summary_two_step_home_away(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1,
+    bool append = false
+);
+
+void run_global_summary_two_step_round_swap(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int max_schedules = -1,
+    bool append = false
+);
+
+// Drivers
+void run_global_summary_one_step_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    int max_schedules = -1,
+    bool append = false
+);
+
+void run_global_summary_two_step_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    int max_schedules = -1,
+    bool append = false
+);
+
+void run_random_walk_experiment(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int walk_length,
+    int max_schedules = -1,
+    unsigned int seed = 42
+);
+
+void run_random_walk_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    int walk_length,
+    int max_schedules = -1,
+    unsigned int seed = 42
+);
+
+void run_random_walk_global_summary(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int walk_length,
+    int max_schedules = -1,
+    unsigned int seed = 42,
+    bool append = false
+);
+
+void run_random_walk_global_summary_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    int walk_length,
+    int max_schedules = -1,
+    unsigned int seed = 42
 );
 
 #endif
