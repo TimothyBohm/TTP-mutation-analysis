@@ -5,6 +5,80 @@
 #include <string>
 #include <vector>
 
+struct ExperimentStats {
+    long long total_neighbors = 0;
+    long long feasible_neighbors = 0;
+
+    long long sum_noRepeat = 0;
+    long long sum_maxStreak = 0;
+    long long sum_doubleRoundRobin = 0;
+    long long sum_total = 0;
+
+    int min_total = std::numeric_limits<int>::max();
+    int max_total = std::numeric_limits<int>::min();
+
+    void add(const ViolationCounts& v) {
+        total_neighbors++;
+
+        if (is_feasible(v)) {
+            feasible_neighbors++;
+        }
+
+        sum_noRepeat += v.noRepeat;
+        sum_maxStreak += v.maxStreak;
+        sum_doubleRoundRobin += v.doubleRoundRobin;
+        sum_total += v.total;
+
+        if (v.total < min_total) min_total = v.total;
+        if (v.total > max_total) max_total = v.total;
+    }
+
+    double feasible_ratio() const {
+        return total_neighbors > 0
+            ? static_cast<double>(feasible_neighbors) / total_neighbors
+            : 0.0;
+    }
+
+    double avg_noRepeat() const {
+        return total_neighbors > 0
+            ? static_cast<double>(sum_noRepeat) / total_neighbors
+            : 0.0;
+    }
+
+    double avg_maxStreak() const {
+        return total_neighbors > 0
+            ? static_cast<double>(sum_maxStreak) / total_neighbors
+            : 0.0;
+    }
+
+    double avg_doubleRoundRobin() const {
+        return total_neighbors > 0
+            ? static_cast<double>(sum_doubleRoundRobin) / total_neighbors
+            : 0.0;
+    }
+
+    double avg_total() const {
+        return total_neighbors > 0
+            ? static_cast<double>(sum_total) / total_neighbors
+            : 0.0;
+    }
+
+    int safe_min_total() const {
+        return total_neighbors > 0 ? min_total : 0;
+    }
+
+    int safe_max_total() const {
+        return total_neighbors > 0 ? max_total : 0;
+    }
+};
+
+inline int get_schedule_limit(const ScheduleSet& data, int max_schedules) {
+    if (max_schedules < 0 || max_schedules > static_cast<int>(data.schedules.size())) {
+        return static_cast<int>(data.schedules.size());
+    }
+    return max_schedules;
+}
+
 //one line per neighbor schedule, with details about the mutation and its violations
 void run_nested_neighborhood_experiment(
     const ScheduleSet& data, 
