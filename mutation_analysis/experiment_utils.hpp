@@ -231,7 +231,7 @@ struct RandomWalkStats {
         return steps > 0 ? static_cast<double>(feasible_count) / steps : 0.0;
     }
 
-    double avg_total() const {
+    double running_avg_total() const {
         return steps > 0 ? static_cast<double>(total_sum) / steps : 0.0;
     }
 };
@@ -254,6 +254,20 @@ inline ViolationCounts apply_random_mutation_and_evaluate(
     if (chosen_operator == HOME_AWAY_SWAP_MUTATION) {
         home_away_swap_random(current, rng);
     } else {
+        round_swap_random(current, rng);
+    }
+
+    return evaluate_schedule(current);
+}
+
+inline ViolationCounts apply_mutation_and_evaluate(
+    Schedule& current,
+    std::mt19937& rng,
+    MutationType op
+) {
+    if (op == HOME_AWAY_SWAP_MUTATION) {
+        home_away_swap_random(current, rng);
+    } else if (op == ROUND_SWAP_MUTATION) {
         round_swap_random(current, rng);
     }
 

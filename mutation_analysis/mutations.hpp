@@ -2,6 +2,8 @@
 #define MUTATIONS_HPP
 
 #include "schedule.hpp"
+//#include "experiments.hpp"
+#include "schedule.hpp"
 #include <random>
 #include <string>
 
@@ -19,8 +21,11 @@ struct RoundSwapNeighbor {
 
 enum MutationType {
     HOME_AWAY_SWAP_MUTATION,
-    ROUND_SWAP_MUTATION
+    ROUND_SWAP_MUTATION,
+    // Add more mutation types here if needed
 };
+
+void apply_mutation(Schedule& schedule, MutationType op);
 
 // Swap two rounds
 void round_swap(Schedule& schedule, int r1, int r2);

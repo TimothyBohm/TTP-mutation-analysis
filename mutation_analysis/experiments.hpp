@@ -1,6 +1,7 @@
 #ifndef EXPERIMENTS_HPP
 #define EXPERIMENTS_HPP
 
+#include "mutations.hpp"
 #include "schedule.hpp"
 #include <string>
 #include <vector>
@@ -50,7 +51,7 @@ void run_one_step_round_swap_experiment(
 );
 
 // Driver for selected team sizes
-void run_one_step_experiments_driver(
+void one_step_experiments_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     int max_schedules = -1,
@@ -72,7 +73,7 @@ void run_two_step_round_swap_experiment(
 );
 
 // New: driver for selected team sizes
-void run_two_step_experiments_driver(
+void two_step_experiments_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -110,7 +111,7 @@ void run_global_summary_two_step_round_swap(
 );
 
 // Drivers
-void run_global_summary_one_step_driver(
+void global_summary_one_step_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -118,7 +119,7 @@ void run_global_summary_one_step_driver(
     bool append = false
 );
 
-void run_global_summary_two_step_driver(
+void global_summary_two_step_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -134,7 +135,16 @@ void run_random_walk_experiment(
     unsigned int seed = 42
 );
 
-void run_random_walk_driver(
+void run_random_walk_single_operator(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    MutationType op,
+    int walk_length,
+    int max_schedules,
+    unsigned int seed
+);
+
+void random_walk_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -143,7 +153,17 @@ void run_random_walk_driver(
     unsigned int seed = 42
 );
 
-void run_random_walk_global_summary(
+void random_walk_single_op_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    MutationType op,
+    int walk_length,
+    int max_schedules = -1,
+    unsigned int seed = 42
+);
+
+void random_walk_global_summary(
     const ScheduleSet& data,
     const std::string& output_file,
     int walk_length,
@@ -152,7 +172,7 @@ void run_random_walk_global_summary(
     bool append = false
 );
 
-void run_random_walk_global_summary_driver(
+void random_walk_global_summary_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,

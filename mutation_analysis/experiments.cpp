@@ -8,6 +8,8 @@
 #include <vector>
 #include <string>
 #include "experiment_utils.hpp"
+#include <numeric>
+#include <algorithm>
 
 template <typename NeighborLoop>
 void run_summary_experiment(
@@ -270,7 +272,7 @@ void run_driver_for_team_sizes(
     std::cout << "All selected team sizes processed.\n";
 }
 
-void run_one_step_experiments_driver(
+void one_step_experiments_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     int max_schedules,
@@ -296,7 +298,7 @@ void run_one_step_experiments_driver(
     );
 }
 
-void run_two_step_experiments_driver(
+void two_step_experiments_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -323,7 +325,7 @@ void run_two_step_experiments_driver(
 }
 
 template <typename SummaryFunc>
-void run_global_summary_driver_helper(
+void global_summary_driver_helper(
     const std::string& data_folder,
     const std::string& output_file,
     const std::vector<int>& team_sizes,
@@ -351,14 +353,14 @@ void run_global_summary_driver_helper(
     }
 }
 
-void run_global_summary_one_step_driver(
+void global_summary_one_step_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
     int max_schedules,
     bool append
 ) {
-    run_global_summary_driver_helper(
+    global_summary_driver_helper(
         data_folder,
         output_folder + "/global_summary_one_step_home_away.csv",
         team_sizes,
@@ -367,7 +369,7 @@ void run_global_summary_one_step_driver(
         run_global_summary_one_step_home_away
     );
 
-    run_global_summary_driver_helper(
+    global_summary_driver_helper(
         data_folder,
         output_folder + "/global_summary_one_step_round_swap.csv",
         team_sizes,
@@ -377,14 +379,14 @@ void run_global_summary_one_step_driver(
     );
 }
 
-void run_global_summary_two_step_driver(
+void global_summary_two_step_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
     int max_schedules,
     bool append
 ) {
-    run_global_summary_driver_helper(
+    global_summary_driver_helper(
         data_folder,
         output_folder + "/global_summary_two_step_home_away.csv",
         team_sizes,
@@ -393,7 +395,7 @@ void run_global_summary_two_step_driver(
         run_global_summary_two_step_home_away
     );
 
-    run_global_summary_driver_helper(
+    global_summary_driver_helper(
         data_folder,
         output_folder + "/global_summary_two_step_round_swap.csv",
         team_sizes,
@@ -424,12 +426,21 @@ void run_random_walk_experiment(
     out << "schedule_id,team_size,step,mutation_id,operator,"
            "noRepeat,maxStreak,doubleRoundRobin,total,"
            "feasible,current_feasible_streak,longest_feasible_streak,"
-           "running_feasible_ratio,running_avg_total,running_max_total\n";
+           "running_feasible_ratio,running_avg_total,max_total\n";
 
     int limit = get_schedule_limit(data, max_schedules);
+
     std::mt19937 rng(seed);
 
-    for (int schedule_id = 0; schedule_id < limit; schedule_id++) {
+    // Randomly choose which schedules to use, without duplicates
+    std::vector<int> indices(data.schedules.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), rng);
+
+
+    for (int k = 0; k < limit; k++) {
+        int schedule_id = indices[k];
+
         Schedule current = data.schedules[schedule_id];
         int team_size = get_num_teams(current);
 
@@ -437,6 +448,7 @@ void run_random_walk_experiment(
 
         for (int step = 0; step < walk_length; step++) {
             MutationType chosen_operator;
+
             ViolationCounts v = apply_random_mutation_and_evaluate(
                 current,
                 rng,
@@ -445,8 +457,7 @@ void run_random_walk_experiment(
 
             stats.add(v);
 
-            long long mutation_id =
-                static_cast<long long>(schedule_id) * walk_length + step;
+            long long mutation_id = static_cast<long long>(schedule_id) * walk_length + step;
 
             out << schedule_id << ","
                 << team_size << ","
@@ -461,13 +472,13 @@ void run_random_walk_experiment(
                 << stats.current_feasible_streak << ","
                 << stats.longest_feasible_streak << ","
                 << stats.feasible_ratio() << ","
-                << stats.avg_total() << ","
+                << stats.running_avg_total() << ","
                 << stats.max_total << "\n";
         }
 
-        if ((schedule_id + 1) % 10 == 0) {
+        if ((k + 1) % 10 == 0) {
             std::cout << "[Random Walk] Processed "
-                      << (schedule_id + 1) << " schedules\n";
+                      << (k + 1) << " schedules\n";
         }
     }
 
@@ -475,7 +486,84 @@ void run_random_walk_experiment(
               << output_file << std::endl;
 }
 
-void run_random_walk_driver(
+void run_random_walk_single_operator(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    MutationType op,
+    int walk_length,
+    int max_schedules,
+    unsigned int seed
+) {
+    if (data.schedules.empty()) {
+        std::cerr << "Error: no schedules available for random walk experiment.\n";
+        return;
+    }
+
+    std::ofstream out(output_file);
+    if (!out.is_open()) {
+        std::cerr << "Error: could not open output file " << output_file << std::endl;
+        return;
+    }
+
+    out << "schedule_id,team_size,step,mutation_id,operator,"
+        << "noRepeat,maxStreak,doubleRoundRobin,total,feasible,"
+        << "current_feasible_streak,longest_feasible_streak,"
+        << "running_feasible_ratio,running_avg_total,max_total\n";
+
+    std::mt19937 rng(seed);
+
+    int schedule_limit = get_schedule_limit(data, max_schedules);
+
+    // 🔹 Random selection of schedules (no duplicates)
+    std::vector<int> indices(data.schedules.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::shuffle(indices.begin(), indices.end(), rng);
+
+    for (int k = 0; k < schedule_limit; k++) {
+        int schedule_id = indices[k];
+
+        Schedule current = data.schedules[schedule_id];
+        int team_size = get_num_teams(current);
+
+        RandomWalkStats stats;
+
+        for (int step = 1; step <= walk_length; step++) {
+            ViolationCounts v =
+                apply_mutation_and_evaluate(current, rng, op);
+
+            stats.add(v);
+
+            long long mutation_id =
+                static_cast<long long>(schedule_id) * walk_length + step;
+
+            out << schedule_id << ","
+                << team_size << ","
+                << step << ","
+                << mutation_id << ","
+                << mutation_type_to_string(op) << ","
+                << v.noRepeat << ","
+                << v.maxStreak << ","
+                << v.doubleRoundRobin << ","
+                << v.total << ","
+                << (v.total == 0) << ","
+                << stats.current_feasible_streak << ","
+                << stats.longest_feasible_streak << ","
+                << stats.feasible_ratio() << ","
+                << stats.running_avg_total() << ","
+                << stats.max_total << "\n";
+        }
+
+        if ((k + 1) % 10 == 0) {
+            std::cout << "[Single Op Walk] Processed "
+                      << (k + 1) << " schedules\n";
+        }
+    }
+
+    std::cout << "[✓] Single-operator random walk saved → "
+              << output_file << "\n";
+}
+
+void random_walk_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -499,7 +587,37 @@ void run_random_walk_driver(
     );
 }
 
-void run_random_walk_global_summary(
+void random_walk_single_op_driver(
+    const std::string& data_folder,
+    const std::string& output_folder,
+    const std::vector<int>& team_sizes,
+    MutationType op,
+    int walk_length,
+    int max_schedules,
+    unsigned int seed
+) {
+    run_driver_for_team_sizes(
+        data_folder,
+        team_sizes,
+        max_schedules,
+        [&](const ScheduleSet& data, int n, int max_schedules) {
+            run_random_walk_single_operator(
+                data,
+                output_folder + "/single_op/random_walk_single_"
+                    + mutation_type_to_string(op)
+                    + "_"
+                    + std::to_string(n)
+                    + ".csv",
+                op,
+                walk_length,
+                max_schedules,
+                seed
+            );
+        }
+    );
+}
+
+void random_walk_global_summary(
     const ScheduleSet& data,
     const std::string& output_file,
     int walk_length,
@@ -596,7 +714,7 @@ void run_random_walk_global_summary(
               << team_size << " to " << output_file << std::endl;
 }
 
-void run_random_walk_global_summary_driver(
+void random_walk_global_summary_driver(
     const std::string& data_folder,
     const std::string& output_folder,
     const std::vector<int>& team_sizes,
@@ -614,7 +732,7 @@ void run_random_walk_global_summary_driver(
         team_sizes,
         max_schedules,
         [&](const ScheduleSet& data, int, int max_schedules) {
-            run_random_walk_global_summary(
+            random_walk_global_summary(
                 data,
                 output_file,
                 walk_length,

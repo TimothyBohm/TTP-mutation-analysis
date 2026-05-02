@@ -15,79 +15,8 @@ std::mt19937 rng(42); //reproducibility
 //./run
 
 int main() {
-    ScheduleSet data = read_schedules_from_file("../Schedules/Schedules_ALL/ALL-8.csv");
-    test_file_validity(data);
-
-    //run_one_step_home_away_experiment(data, "../Results/one_step/results_one_step_home_away_16.csv", 10000);
-    //run_one_step_round_swap_experiment(data, "../Results/one_step/results_one_step_round_swap_16.csv", 200);
-
-    //run_two_step_home_away_experiment(data, "../Results/two_step/results_two_step_home_away_16.csv", 200);
-
-    /* run_one_step_experiments_driver(
-        SCHEDULE_FOLDER,
-        "../Results",
-        1000,
-        {8}
-    );
-
-    run_two_step_experiments_driver(
-        SCHEDULE_FOLDER,
-        "../Results",
-        {8},
-        1000
-    ); */
-
-    /* run_global_summary_one_step_driver(
-        SCHEDULE_FOLDER,
-        "../Results/one_step",
-        {6,8,10,12,14,16},
-        1000,
-        false
-    ); */
-
-    /* run_global_summary_two_step_driver(
-        SCHEDULE_FOLDER,
-        "../Results/two_step",
-        {14,16},
-        25,
-        true
-    ); */
-
-
-    /* run_random_walk_driver(
-        SCHEDULE_FOLDER,
-        "../Results/random_walk",
-        {16},
-        1000000,   // walk length
-        1,    // number of original schedules
-        42     // seed
-    ); */
-
-    /* run_random_walk_global_summary_driver(
-        SCHEDULE_FOLDER,
-        "../Results/random_walk",
-        {6,8,10,12,14,16},
-        20000,   // walk length
-        50,    // number of starting schedules per team size
-        42     // seed
-    ); */
-
-
-     // 2-step experiments
-    run_two_step_home_away_experiment(
-        data,
-        "/Results/1_step/test_two_step_home_away_8.csv",
-        100
-    );
-
-    run_two_step_round_swap_experiment(
-        data,
-        "/Results/1_step/test_two_step_round_swap_8.csv",
-        100
-    );
-
     
-    // Driver tests
+    /* // Driver tests
     run_one_step_experiments_driver(
         SCHEDULE_FOLDER,
         "../Results/1_step",
@@ -116,28 +45,47 @@ int main() {
         {6,8,10,12},
         20,
         true
+    );  */
+
+
+    random_walk_driver(
+        SCHEDULE_FOLDER,
+        "../Results/random_walk",
+        {16},
+        20000,
+        50,
+        42
     );
 
-
-    run_random_walk_driver(
+    /* run_random_walk_global_summary_driver(
         SCHEDULE_FOLDER,
         "../Results/random_walk",
         {6,8,10,12},
         20000,
         20,
         42
-    );
+    ); */
 
-    run_random_walk_global_summary_driver(
+
+    /* run_random_walk_single_op_driver(
         SCHEDULE_FOLDER,
         "../Results/random_walk",
-        {6,8,10,12},
-        20000,
-        20,
+        {14, 16},
+        MutationType::HOME_AWAY_SWAP_MUTATION,
+        100000,
+        1,
         42
     );
 
-
+    run_random_walk_single_op_driver(
+        SCHEDULE_FOLDER,
+        "../Results/random_walk",
+        {14, 16},
+        MutationType::ROUND_SWAP_MUTATION,
+        100000,
+        1,
+        42
+    ); */
 
     return 0;
 }
