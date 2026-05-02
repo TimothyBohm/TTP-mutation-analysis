@@ -51,41 +51,58 @@ int main() {
     random_walk_driver(
         SCHEDULE_FOLDER,
         "../Results/random_walk",
-        {16},
+        {4,6,8,10,12,14,16},
         20000,
         50,
         42
     );
 
-    /* run_random_walk_global_summary_driver(
+    random_walk_driver(
         SCHEDULE_FOLDER,
-        "../Results/random_walk",
-        {6,8,10,12},
-        20000,
+        "../Results/random_walk/popular_schedules",
+        {6, 8},
+        1000000,
         20,
         42
-    ); */
+    );
 
-
-    /* run_random_walk_single_op_driver(
+    random_walk_driver(
         SCHEDULE_FOLDER,
-        "../Results/random_walk",
-        {14, 16},
-        MutationType::HOME_AWAY_SWAP_MUTATION,
-        100000,
+        "../Results/random_walk/single_instance",
+        {8,12},
+        1000000,
         1,
         42
     );
 
-    run_random_walk_single_op_driver(
+    random_walk_single_op_driver(
+        SCHEDULE_FOLDER,
+        "../Results/random_walk/single_op/home_away",
+        {6,8,10,12,14,16},
+        MutationType::HOME_AWAY_SWAP_MUTATION,
+        20000,
+        50,
+        42
+    );
+
+    random_walk_single_op_driver(
+        SCHEDULE_FOLDER,
+        "../Results/random_walk/single_op/round_swap",
+        {6,8,10,12,14,16},
+        MutationType::ROUND_SWAP_MUTATION,
+        20000,
+        50,
+        42
+    );
+
+    random_walk_global_summary_driver(
         SCHEDULE_FOLDER,
         "../Results/random_walk",
-        {14, 16},
-        MutationType::ROUND_SWAP_MUTATION,
-        100000,
-        1,
+        {6,8,10,12,14,16},
+        20000,
+        50,
         42
-    ); */
+    );
 
     return 0;
 }
