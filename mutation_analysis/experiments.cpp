@@ -423,7 +423,7 @@ void run_random_walk_experiment(
         return;
     }
 
-    out << "schedule_id,team_size,step,mutation_id,operator,"
+    out << "walk_id,schedule_id,team_size,step,mutation_id,operator,"
            "noRepeat,maxStreak,doubleRoundRobin,total,"
            "feasible,current_feasible_streak,longest_feasible_streak,"
            "running_feasible_ratio,running_avg_total,max_total\n";
@@ -432,14 +432,12 @@ void run_random_walk_experiment(
 
     std::mt19937 rng(seed);
 
-    // Randomly choose which schedules to use, without duplicates
     std::vector<int> indices(data.schedules.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::shuffle(indices.begin(), indices.end(), rng);
 
-
-    for (int k = 0; k < limit; k++) {
-        int schedule_id = indices[k];
+    for (int walk_id = 0; walk_id < limit; walk_id++) {
+        int schedule_id = indices[walk_id];
 
         Schedule current = data.schedules[schedule_id];
         int team_size = get_num_teams(current);
@@ -457,9 +455,11 @@ void run_random_walk_experiment(
 
             stats.add(v);
 
-            long long mutation_id = static_cast<long long>(schedule_id) * walk_length + step;
+            long long mutation_id =
+                static_cast<long long>(walk_id) * walk_length + step;
 
-            out << schedule_id << ","
+            out << walk_id << ","                
+                << schedule_id << ","
                 << team_size << ","
                 << step << ","
                 << mutation_id << ","
@@ -476,9 +476,9 @@ void run_random_walk_experiment(
                 << stats.max_total << "\n";
         }
 
-        if ((k + 1) % 10 == 0) {
+        if ((walk_id + 1) % 10 == 0) {
             std::cout << "[Random Walk] Processed "
-                      << (k + 1) << " schedules\n";
+                      << (walk_id + 1) << " walks\n";
         }
     }
 
@@ -505,7 +505,7 @@ void run_random_walk_single_operator(
         return;
     }
 
-    out << "schedule_id,team_size,step,mutation_id,operator,"
+    out << "walk_id,schedule_id,team_size,step,mutation_id,operator,"
         << "noRepeat,maxStreak,doubleRoundRobin,total,feasible,"
         << "current_feasible_streak,longest_feasible_streak,"
         << "running_feasible_ratio,running_avg_total,max_total\n";
@@ -514,13 +514,13 @@ void run_random_walk_single_operator(
 
     int schedule_limit = get_schedule_limit(data, max_schedules);
 
-    // 🔹 Random selection of schedules (no duplicates)
+    // Random selection of schedules
     std::vector<int> indices(data.schedules.size());
     std::iota(indices.begin(), indices.end(), 0);
     std::shuffle(indices.begin(), indices.end(), rng);
 
-    for (int k = 0; k < schedule_limit; k++) {
-        int schedule_id = indices[k];
+    for (int walk_id = 0; walk_id < schedule_limit; walk_id++) {
+        int schedule_id = indices[walk_id];
 
         Schedule current = data.schedules[schedule_id];
         int team_size = get_num_teams(current);
@@ -528,15 +528,17 @@ void run_random_walk_single_operator(
         RandomWalkStats stats;
 
         for (int step = 1; step <= walk_length; step++) {
+
             ViolationCounts v =
                 apply_mutation_and_evaluate(current, rng, op);
 
             stats.add(v);
 
-            long long mutation_id =
-                static_cast<long long>(schedule_id) * walk_length + step;
+            //mutation_id now tied to walk_id
+            long long mutation_id = static_cast<long long>(walk_id) * walk_length + step;
 
-            out << schedule_id << ","
+            out << walk_id << ","             
+                << schedule_id << ","          
                 << team_size << ","
                 << step << ","
                 << mutation_id << ","
@@ -553,9 +555,9 @@ void run_random_walk_single_operator(
                 << stats.max_total << "\n";
         }
 
-        if ((k + 1) % 10 == 0) {
+        if ((walk_id + 1) % 10 == 0) {
             std::cout << "[Single Op Walk] Processed "
-                      << (k + 1) << " schedules\n";
+                      << (walk_id + 1) << " walks\n";
         }
     }
 

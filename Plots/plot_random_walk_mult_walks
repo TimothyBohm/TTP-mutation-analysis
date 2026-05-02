@@ -5,10 +5,10 @@ import sys
 import os
 
 # ── Configuration ────────────────────────────────────────────────────────────
-FILE   = "Results/random_walk/random_walk_16_20runs.csv"
-OUTPUT = "random_walk_16_range.png"
+FILE   = "../Results/random_walk/random_walk_16.csv"
+OUTPUT = "graphs/random_walk_16_range.png"
 
-XTICK_STEP = 250_000
+XTICK_STEP = 1000
 
 COLOR_MEAN = "#2C3E50"
 COLOR_FILL = "#AAB7C4"
@@ -34,7 +34,7 @@ def load(path):
     if missing:
         sys.exit(f"[ERROR] Missing columns: {missing}")
 
-    return df.sort_values(["schedule_id", "step"]).reset_index(drop=True)
+    return df.sort_values(["walk_id", "step"]).reset_index(drop=True)
 
 
 df = load(FILE)
@@ -43,7 +43,7 @@ df = load(FILE)
 df = df[df["team_size"] == 16].copy()
 
 # Optional: limit plotted range
-MAX_STEP = 1_000_000
+MAX_STEP = 5000
 df = df[df["step"] <= MAX_STEP]
 
 # ── Aggregate over random walks ──────────────────────────────────────────────
