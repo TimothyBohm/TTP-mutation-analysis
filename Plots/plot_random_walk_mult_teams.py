@@ -5,18 +5,22 @@ import sys
 import os
 
 # ── Configuration ────────────────────────────────────────────────────────────
-FILE   = "Results/random_walk/random_walk_16_singular.csv"   # ← change to your CSV path
-OUTPUT = "random_walk_16_running_avg.png"
+FILES = {
+    8:  "../Results/random_walk/single_op/round_swap/random_walk_single_round_swap_8.csv",
+    12: "../Results/random_walk/single_op/round_swap/random_walk_single_round_swap_12.csv",
+    16: "../Results/random_walk/single_op/round_swap/random_walk_single_round_swap_16.csv",
+}
 
-COLOR_LINE      = "#2C3E50"
-COLOR_FEASIBLE  = "#2ECC71"
-EDGE_FEASIBLE   = "#1A7A43"
+OUTPUT = "graphs/random_walk_round_swap_multi_team_range.png"
 
-LINE_WIDTH      = 1.4
-POINT_SIZE      = 18
-POINT_ALPHA     = 0.85
+MAX_STEP = 5000
+XTICK_STEP = 1000
 
-XTICK_STEP      = 2_000
+COLORS = {
+    8:  "#2ECC71",
+    12: "#3498DB",
+    16: "#E74C3C",
+}
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load(path):
@@ -26,63 +30,76 @@ def load(path):
     df = pd.read_csv(path)
 
     required = {
+        "walk_id",
         "schedule_id",
         "team_size",
         "step",
-        "running_avg_total",
-        "feasible"
+        "running_avg_total"
     }
 
     missing = required - set(df.columns)
     if missing:
-        sys.exit(f"[ERROR] Missing columns: {missing}")
+        sys.exit(f"[ERROR] Missing columns in {path}: {missing}")
 
-    return df.sort_values("step").reset_index(drop=True)
+    return df.sort_values(["walk_id", "step"]).reset_index(drop=True)
 
 
-MAX_STEP = 20_000  
+def summarize_team_file(path, team_size):
+    df = load(path)
 
-df = load(FILE)
-df = df[df["step"] <= MAX_STEP]
+    df = df[df["team_size"] == team_size].copy()
+    df = df[df["step"] <= MAX_STEP]
 
-# Keep one instance only, in case the file contains multiple schedules
-schedule_id = df["schedule_id"].iloc[0]
-df = df[df["schedule_id"] == schedule_id].copy()
+    if df.empty:
+        sys.exit(f"[ERROR] No data found for team size {team_size} in {path}")
 
-feasible = df[df["feasible"] == 1]
+    summary = (
+        df.groupby("step")
+          .agg(
+              min_running_avg=("running_avg_total", "min"),
+              max_running_avg=("running_avg_total", "max"),
+              mean_running_avg=("running_avg_total", "mean")
+          )
+          .reset_index()
+    )
 
-n_total = len(df)
-n_feasible = len(feasible)
-team_size = df["team_size"].iloc[0]
+    n_walks = df["walk_id"].nunique()
+
+    return summary, n_walks
+
 
 # ── Plot ─────────────────────────────────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(14, 6))
 fig.patch.set_facecolor("#F7F9FC")
 ax.set_facecolor("#F7F9FC")
 
-# Main running average curve
-ax.plot(
-    df["step"],
-    df["running_avg_total"],
-    color=COLOR_LINE,
-    linewidth=LINE_WIDTH,
-    alpha=0.85,
-    zorder=2,
-    label="Running average total violations"
-)
+legend_labels = []
 
-# Feasible schedules marked on the curve
-ax.scatter(
-    feasible["step"],
-    feasible["running_avg_total"],
-    color=COLOR_FEASIBLE,
-    edgecolors=EDGE_FEASIBLE,
-    linewidths=0.5,
-    s=POINT_SIZE,
-    alpha=POINT_ALPHA,
-    zorder=3,
-    label=f"Feasible schedules  (n={n_feasible:,})"
-)
+for team_size, path in FILES.items():
+    summary, n_walks = summarize_team_file(path, team_size)
+
+    color = COLORS[team_size]
+
+    # Range
+    ax.fill_between(
+        summary["step"],
+        summary["min_running_avg"],
+        summary["max_running_avg"],
+        color=color,
+        alpha=0.16,
+        zorder=1
+    )
+
+    # Mean curve
+    ax.plot(
+        summary["step"],
+        summary["mean_running_avg"],
+        color=color,
+        linewidth=2.0,
+        alpha=0.95,
+        zorder=2,
+        label=f"{team_size} teams ({n_walks} walks)"
+    )
 
 # ── Grid & spines ────────────────────────────────────────────────────────────
 ax.yaxis.grid(True, color="#D0D8E4", linewidth=0.7, linestyle="--", zorder=0)
@@ -96,24 +113,23 @@ for spine in ["left", "bottom"]:
     ax.spines[spine].set_color("#C8D6E5")
     ax.spines[spine].set_linewidth(0.8)
 
-# ── Axes labels & ticks ──────────────────────────────────────────────────────
-max_step = int(df["step"].max())
-xticks = np.arange(0, max_step + XTICK_STEP, XTICK_STEP)
+# ── Axes ─────────────────────────────────────────────────────────────────────
+xticks = np.arange(0, MAX_STEP + XTICK_STEP, XTICK_STEP)
 
 ax.set_xticks(xticks)
 ax.set_xticklabels([f"{x:,}" for x in xticks])
 
 ax.set_xlabel(
     "Step",
-    fontsize=11,
+    fontsize=14,
     fontweight="bold",
     color="#1A252F",
     labelpad=10
 )
 
 ax.set_ylabel(
-    "Running Average Total Violations",
-    fontsize=11,
+    "Average Total Violations",
+    fontsize=14,
     fontweight="bold",
     color="#1A252F",
     labelpad=15
@@ -124,19 +140,18 @@ ax.tick_params(axis="y", labelsize=9, colors="#2C3E50")
 
 # ── Title ────────────────────────────────────────────────────────────────────
 ax.set_title(
-    f"Random Walk Running Average Violations "
-    f"(Team Size {team_size}, {n_total:,} steps)",
-    fontsize=13,
+    "Random Walk Round Swap Average Violations",
+    fontsize=18,
     fontweight="bold",
     color="#1A252F",
     pad=16,
     fontfamily="DejaVu Sans"
 )
 
-# ── Legend ───────────────────────────────────────────────────────────────────
 ax.legend(
-    fontsize=9,
+    fontsize=11,
     loc="upper right",
+    bbox_to_anchor=(1.0, 1.1),  
     framealpha=0.9,
     edgecolor="#C8D6E5",
     fancybox=False

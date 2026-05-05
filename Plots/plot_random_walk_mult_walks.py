@@ -5,7 +5,7 @@ import sys
 import os
 
 # ── Configuration ────────────────────────────────────────────────────────────
-FILE   = "../Results/random_walk/random_walk_16.csv"
+FILE   = "../Results/random_walk/single_op/home_away/random_walk_single_home_away_swap_16.csv"
 OUTPUT = "graphs/random_walk_16_range.png"
 
 XTICK_STEP = 1000
@@ -39,7 +39,7 @@ def load(path):
 
 df = load(FILE)
 
-# Optional: only team size 16
+
 df = df[df["team_size"] == 16].copy()
 
 # Optional: limit plotted range
@@ -59,6 +59,8 @@ summary = (
 )
 
 feasible_steps = summary[summary["feasible_count"] > 0]
+
+total_feasible_found = int(df["feasible"].sum())
 
 n_walks = df["schedule_id"].nunique()
 team_size = df["team_size"].iloc[0]
@@ -100,7 +102,7 @@ ax.scatter(
     s=22,
     alpha=0.9,
     zorder=3,
-    label="At least one feasible schedule found"
+    label=f"Feasible schedules found: {total_feasible_found:,}"
 )
 
 # ── Grid & spines ────────────────────────────────────────────────────────────
@@ -124,7 +126,7 @@ ax.set_xticklabels([f"{x:,}" for x in xticks])
 
 ax.set_xlabel(
     "Step",
-    fontsize=11,
+    fontsize=14,
     fontweight="bold",
     color="#1A252F",
     labelpad=10
@@ -132,7 +134,7 @@ ax.set_xlabel(
 
 ax.set_ylabel(
     "Running Average Total Violations",
-    fontsize=11,
+    fontsize=14,
     fontweight="bold",
     color="#1A252F",
     labelpad=15
@@ -143,9 +145,9 @@ ax.tick_params(axis="y", labelsize=9, colors="#2C3E50")
 
 # ── Title ────────────────────────────────────────────────────────────────────
 ax.set_title(
-    f"Random Walk Running Average Violations "
+    f"Random Walk Home-Away Swap Running Average Violations "
     f"(Team Size {team_size}, {n_walks} walks)",
-    fontsize=13,
+    fontsize=16,
     fontweight="bold",
     color="#1A252F",
     pad=16,
@@ -153,8 +155,8 @@ ax.set_title(
 )
 
 ax.legend(
-    fontsize=9,
-    loc="upper right",
+    fontsize=11,
+    loc="lower right",
     framealpha=0.9,
     edgecolor="#C8D6E5",
     fancybox=False
