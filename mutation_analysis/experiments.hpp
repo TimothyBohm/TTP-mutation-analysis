@@ -181,4 +181,12 @@ void random_walk_global_summary_driver(
     unsigned int seed = 42
 );
 
+void run_random_walk_save_feasible_hits(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int walk_length,
+    int max_schedules = 20,
+    unsigned int seed = 42
+);
+
 #endif
