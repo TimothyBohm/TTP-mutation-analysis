@@ -1,6 +1,7 @@
 #ifndef SCHEDULE_HPP
 #define SCHEDULE_HPP
 
+#include <string>
 #include <vector>
 #define MAX_STREAK 3
 
@@ -38,6 +39,8 @@ struct TeamScheduleTable {
 
 
 //print helper functions
+void print_violations(const std::string& label, const Schedule& schedule);
+
 void print_matchup(const Matchup& m);
 
 void print_round(const Round& r, int round_index);

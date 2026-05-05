@@ -3,8 +3,20 @@
 #include <iostream>
 #include <unordered_map>
 #include <set>
+#include <string>
 
 #define MAX_STREAK 3
+
+void print_violations(const std::string& label, const Schedule& schedule) {
+    ViolationCounts v = evaluate_schedule(schedule);
+
+    std::cout << label << "\n"
+              << "noRepeat = " << v.noRepeat << "\n"
+              << "maxStreak = " << v.maxStreak << "\n"
+              << "doubleRoundRobin = " << v.doubleRoundRobin << "\n"
+              << "total = " << v.total << "\n"
+              << "feasible = " << (is_feasible(v) ? 1 : 0) << "\n\n";
+    }
 
 //print a single matchup
 void print_matchup(const Matchup& m) {

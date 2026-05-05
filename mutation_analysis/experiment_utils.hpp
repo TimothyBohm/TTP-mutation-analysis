@@ -237,11 +237,16 @@ struct RandomWalkStats {
 };
 
 inline MutationType choose_random_mutation(std::mt19937& rng) {
-    static std::uniform_int_distribution<int> dist(0, 1);
+    static const std::vector<MutationType> mutations = {
+        HOME_AWAY_SWAP_MUTATION,
+        ROUND_SWAP_MUTATION,
+        TEAM_SWAP_MUTATION,
+        MATCH_SWAP_MUTATION,
+        MATCH_ROUND_SWAP_MUTATION
+    };
 
-    return dist(rng) == 0
-        ? HOME_AWAY_SWAP_MUTATION
-        : ROUND_SWAP_MUTATION;
+    std::uniform_int_distribution<int> dist(0, mutations.size() - 1);
+    return mutations[dist(rng)];
 }
 
 inline ViolationCounts apply_random_mutation_and_evaluate(
@@ -253,8 +258,14 @@ inline ViolationCounts apply_random_mutation_and_evaluate(
 
     if (chosen_operator == HOME_AWAY_SWAP_MUTATION) {
         home_away_swap_random(current, rng);
-    } else {
+    } else if(chosen_operator == TEAM_SWAP_MUTATION) {
+        team_swap_random(current, rng);
+    } else if(chosen_operator == ROUND_SWAP_MUTATION) {
         round_swap_random(current, rng);
+    } else if(chosen_operator == MATCH_SWAP_MUTATION) {
+        match_swap_random(current, rng);
+    } else if(chosen_operator == MATCH_ROUND_SWAP_MUTATION) {
+        match_round_swap_random(current, rng);
     }
 
     return evaluate_schedule(current);
@@ -267,8 +278,14 @@ inline ViolationCounts apply_mutation_and_evaluate(
 ) {
     if (op == HOME_AWAY_SWAP_MUTATION) {
         home_away_swap_random(current, rng);
-    } else if (op == ROUND_SWAP_MUTATION) {
+    } else if(op == TEAM_SWAP_MUTATION) {
+        team_swap_random(current, rng);
+    } else if(op == ROUND_SWAP_MUTATION) {
         round_swap_random(current, rng);
+    } else if(op == MATCH_SWAP_MUTATION) {
+        match_swap_random(current, rng);
+    } else if(op == MATCH_ROUND_SWAP_MUTATION) {
+        match_round_swap_random(current, rng);
     }
 
     return evaluate_schedule(current);
