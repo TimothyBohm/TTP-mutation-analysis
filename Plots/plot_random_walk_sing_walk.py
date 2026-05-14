@@ -5,8 +5,8 @@ import sys
 import os
 
 # ── Configuration ────────────────────────────────────────────────────────────
-FILE   = "../Results/random_walk/single_instance/random_walk_16.csv"   # ← change to your CSV path
-OUTPUT = "graphs/random_walk_16_running_avg.png"
+FILE   = "../Results/random_walk/single_instance/random_walk_8.csv"   # ← change to your CSV path
+OUTPUT = "graphs/random_walk_8_running_avg.png"
 
 COLOR_LINE      = "#2C3E50"
 COLOR_FEASIBLE  = "#2ECC71"
