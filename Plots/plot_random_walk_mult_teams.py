@@ -6,12 +6,12 @@ import os
 
 # ── Configuration ────────────────────────────────────────────────────────────
 FILES = {
-    8:  "../Results/random_walk/single_op/round_swap/random_walk_single_round_swap_8.csv",
-    12: "../Results/random_walk/single_op/round_swap/random_walk_single_round_swap_12.csv",
-    16: "../Results/random_walk/single_op/round_swap/random_walk_single_round_swap_16.csv",
+    8:  "../Results/random_walk/single_op/match_round_swap/random_walk_single_match_round_swap_8.csv",
+    12: "../Results/random_walk/single_op/match_round_swap/random_walk_single_match_round_swap_12.csv",
+    16: "../Results/random_walk/single_op/match_round_swap/random_walk_single_match_round_swap_16.csv",
 }
 
-OUTPUT = "graphs/random_walk_round_swap_multi_team_range.png"
+OUTPUT = "graphs/random_walk_match_round_swap_multi_team_range.png"
 
 MAX_STEP = 5000
 XTICK_STEP = 1000
@@ -140,7 +140,7 @@ ax.tick_params(axis="y", labelsize=9, colors="#2C3E50")
 
 # ── Title ────────────────────────────────────────────────────────────────────
 ax.set_title(
-    "Random Walk Round Swap Average Violations",
+    "Random Walk Match Round Swap Average Violations",
     fontsize=18,
     fontweight="bold",
     color="#1A252F",

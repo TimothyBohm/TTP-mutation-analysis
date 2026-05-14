@@ -105,7 +105,7 @@ ax.set_xticklabels([f"{x:,}" for x in xticks])
 
 ax.set_xlabel(
     "Step",
-    fontsize=11,
+    fontsize=14,
     fontweight="bold",
     color="#1A252F",
     labelpad=10
@@ -113,7 +113,7 @@ ax.set_xlabel(
 
 ax.set_ylabel(
     "Running Average Total Violations",
-    fontsize=11,
+    fontsize=14,
     fontweight="bold",
     color="#1A252F",
     labelpad=15
@@ -126,7 +126,7 @@ ax.tick_params(axis="y", labelsize=9, colors="#2C3E50")
 ax.set_title(
     f"Random Walk Running Average Violations "
     f"(Team Size {team_size}, {n_total:,} steps)",
-    fontsize=13,
+    fontsize=16,
     fontweight="bold",
     color="#1A252F",
     pad=16,
@@ -135,7 +135,7 @@ ax.set_title(
 
 # ── Legend ───────────────────────────────────────────────────────────────────
 ax.legend(
-    fontsize=9,
+    fontsize=11,
     loc="upper right",
     framealpha=0.9,
     edgecolor="#C8D6E5",
