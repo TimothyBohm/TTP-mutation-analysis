@@ -2,7 +2,7 @@
 
 This repository contains experimental tools and mutation-operator analysis for the **Traveling Tournament Problem (TTP)**. The project was developed as part of a Bachelor thesis at **Vrije Universiteit Amsterdam** under the supervision of **Daan van den Berg**.
 
-The repository builds upon the original **TTP-DFS** implementation developed by **Bas Loyen et al.**, this includes the following files {TTP.py, calc.py, helper.py, and run.py}:
+The repository builds upon the original **TTP-DFS** implementation developed by **Bas Loyen et al.**, specifically the following files have been used from his repository {TTP.py, calc.py, helper.py, and run.py}:
 
 https://github.com/OdyMeister/TTP-DFS
 
