@@ -2,25 +2,47 @@
 #include "mutations.hpp"
 #include "schedule.hpp"
 #include "read_schedules.hpp"
+#include "experiment_utils.hpp"
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <vector>
 #include <string>
-#include "experiment_utils.hpp"
 #include <numeric>
 #include <algorithm>
 #include <sstream>
+#include <map>
+#include <utility>
+#include <unordered_map>
+#include <stdexcept>
+
 
 std::string schedule_to_key(const Schedule& schedule) {
     std::ostringstream key;
+
+    if (schedule.rounds.empty()) {
+        return "";
+    }
+
+    std::unordered_map<int, int> team_map;
+
+    int next_team = 0;
+
+    //normalize schedule to only find unique schedules under team relabeling and round reordering
+    for (const auto& game : schedule.rounds[0].games) {
+        team_map[game.home] = next_team++;
+        team_map[game.away] = next_team++;
+    }
 
     for (int r = 0; r < static_cast<int>(schedule.rounds.size()); r++) {
         std::vector<std::string> games;
 
         for (const auto& game : schedule.rounds[r].games) {
+            int norm_home = team_map.at(game.home);
+            int norm_away = team_map.at(game.away);
+
             games.push_back(
-                std::to_string(game.home) + "-" + std::to_string(game.away)
+                std::to_string(norm_home) + "-" + std::to_string(norm_away)
             );
         }
 
@@ -839,4 +861,71 @@ void run_random_walk_save_feasible_hits(
     out.close();
 
     std::cout << "Saved feasible hits to " << output_file << "\n";
+}
+
+void run_random_walk_violation_transition_matrix(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int walk_length,
+    int start_schedule_id,
+    unsigned int seed
+) {
+    if (data.schedules.empty()) {
+        std::cerr << "Error: no schedules available.\n";
+        return;
+    }
+
+    if (start_schedule_id < 0 || start_schedule_id >= static_cast<int>(data.schedules.size())) {
+        std::cerr << "Error: invalid start_schedule_id.\n";
+        return;
+    }
+
+    std::ofstream out(output_file);
+
+    if (!out.is_open()) {
+        std::cerr << "Error: could not open output file " << output_file << std::endl;
+        return;
+    }
+
+    Schedule current = data.schedules[start_schedule_id];
+    std::mt19937 rng(seed);
+
+    ViolationCounts previous_v = evaluate_schedule(current);
+    int previous_total = previous_v.total;
+
+    std::map<std::pair<int, int>, long long> transitions;
+
+    for (int step = 1; step <= walk_length; step++) {
+        MutationType chosen_operator;
+
+        ViolationCounts current_v = apply_random_mutation_and_evaluate(
+            current,
+            rng,
+            chosen_operator
+        );
+
+        int current_total = current_v.total;
+
+        transitions[{previous_total, current_total}]++;
+
+        previous_total = current_total;
+
+        if (step % 100000 == 0) {
+            std::cout << "[Transition Matrix] Step "
+                      << step << "/" << walk_length << "\n";
+        }
+    }
+
+    out << "previous_total,current_total,count\n";
+
+    for (const auto& entry : transitions) {
+        out << entry.first.first << ","
+            << entry.first.second << ","
+            << entry.second << "\n";
+    }
+
+    out.close();
+
+    std::cout << "Violation transition matrix written to "
+              << output_file << "\n";
 }

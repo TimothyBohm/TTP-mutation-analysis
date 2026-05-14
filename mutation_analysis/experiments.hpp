@@ -189,4 +189,12 @@ void run_random_walk_save_feasible_hits(
     unsigned int seed = 42
 );
 
+void run_random_walk_violation_transition_matrix(
+    const ScheduleSet& data,
+    const std::string& output_file,
+    int walk_length,
+    int start_schedule_id = 0,
+    unsigned int seed = 42
+);
+
 #endif
