@@ -1,17 +1,32 @@
-## TTP-DFS
+# TTP-Mutation-Analysis
 
-This repository builds upon the TTP-DFS implementation originally developed by Bas Loyen et al.:
+This repository contains experimental tools and mutation-operator analysis for the **Traveling Tournament Problem (TTP)**. The project was developed as part of a Bachelor thesis at **Vrije Universiteit Amsterdam** under the supervision of **Daan van den Berg**.
+
+The repository builds upon the original **TTP-DFS** implementation developed by **Bas Loyen et al.**, specifically the following files have been used from his repository {TTP.py, calc.py, helper.py, and run.py}:
 
 https://github.com/OdyMeister/TTP-DFS
 
-The original code is used as a foundation for experiments conducted in a Bachelor thesis at Vrije Universiteit Amsterdam under the supervision of Daan van den Berg.
+The original DFS-based schedule generator is used to generate feasible Traveling Tournament Problem schedules, which are then used for large-scale random walk experiments and mutation-operator analysis.
 
-Additional work in this repository focuses on testing and analyzing mutation operators on Traveling Tournament Problem schedules.
-DFS pruning algorithm for finding all valid TTP schedules.
+/mutation_analysis contains all of the implementation, while /plots is used for all the neccesarry plotting.
 
-## Usage
+---
+
+# Project Overview
+
+Implemented mutation operators include:
+
+- TeamSwap
+- RoundSwap
+- HomeAwaySwap
+- MatchSwap
+- MatchRoundSwap
+
+---
 
 ### Generate Schedules
+
+The repository includes the original DFS-based TTP schedule generator from the TTP-DFS project.
 
 Generates all normalized (-N) schedules for `n=4` and saves them to the folder `Schedules_All`:
 
@@ -19,18 +34,23 @@ Generates all normalized (-N) schedules for `n=4` and saves them to the folder `
 python3 run.py -N -s=All 4
 ```
 
-### Calculate Differences
 
-Calculates the differences between the normalized schedules and saves them to the folder `Differences`:
+### Run Random Walk Experiments
+
+Random walk experiments are executed through functions defined in `main.cpp`.
+
+To run an experiment:
+
+1. Open `main.cpp`
+2. Uncomment or add the desired experiment function call
+3. Compile the project
 
 ```sh
-python3 calc.py ./Schedules/Schedules_All/All-4.csv 4
+g++ -std=c++17 *.cpp -o run -Wall -Wextra
 ```
 
-### Generate Plot
-
-Generates the plot from the paper and saves it to the folder `Plots`:
+4. Run the executable
 
 ```sh
-python3 plot.py
+./run
 ```
