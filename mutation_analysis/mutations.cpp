@@ -14,6 +14,51 @@ std::pair<int, int> pair_key(int a, int b) {
     return (a < b) ? std::make_pair(a, b) : std::make_pair(b, a);
 }
 
+int get_opponent_in_round(const Round& round, int team) {
+    for (const auto& game : round.games) {
+        if (game.home == team) return game.away;
+        if (game.away == team) return game.home;
+    }
+    return -1;
+}
+
+bool team_is_home_in_round(const Round& round, int team) {
+    for (const auto& game : round.games) {
+        if (game.home == team) return true;
+        if (game.away == team) return false;
+    }
+
+    return false;
+}
+
+bool teams_play_together_in_round(const Round& round, int team1, int team2) {
+    for (const auto& game : round.games) {
+        if ((game.home == team1 && game.away == team2) ||
+            (game.home == team2 && game.away == team1)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int find_round_where_teams_play(
+    const Schedule& schedule,
+    int team1,
+    int team2,
+    int excluded_round
+) {
+    for (int r = 0; r < static_cast<int>(schedule.rounds.size()); r++) {
+        if (r == excluded_round) continue;
+
+        if (teams_play_together_in_round(schedule.rounds[r], team1, team2)) {
+            return r;
+        }
+    }
+
+    return -1;
+}
+
 Matchup find_matchup_between(const Round& round, int a, int b) {
     for (const auto& game : round.games) {
         if ((game.home == a && game.away == b) ||
@@ -240,51 +285,6 @@ void team_swap_random(Schedule& schedule, std::mt19937& rng) {
     team_swap(schedule, teamA, teamB);
 }
 
-int get_opponent_in_round(const Round& round, int team) {
-    for (const auto& game : round.games) {
-        if (game.home == team) return game.away;
-        if (game.away == team) return game.home;
-    }
-    return -1;
-}
-
-bool team_is_home_in_round(const Round& round, int team) {
-    for (const auto& game : round.games) {
-        if (game.home == team) return true;
-        if (game.away == team) return false;
-    }
-
-    return false;
-}
-
-bool teams_play_together_in_round(const Round& round, int team1, int team2) {
-    for (const auto& game : round.games) {
-        if ((game.home == team1 && game.away == team2) ||
-            (game.home == team2 && game.away == team1)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-int find_round_where_teams_play(
-    const Schedule& schedule,
-    int team1,
-    int team2,
-    int excluded_round
-) {
-    for (int r = 0; r < static_cast<int>(schedule.rounds.size()); r++) {
-        if (r == excluded_round) continue;
-
-        if (teams_play_together_in_round(schedule.rounds[r], team1, team2)) {
-            return r;
-        }
-    }
-
-    return -1;
-}
-
 void set_game_for_team_preserve_location(
     Round& round,
     int team,
@@ -456,65 +456,6 @@ RoundEntry get_round_entry(const Round& round, int team) {
     return RoundEntry{-1, false};
 }
 
-void rebuild_round_from_entries(
-    Round& round,
-    const std::vector<RoundEntry>& entries,
-    int preferred_team = -1
-) {
-    int n = static_cast<int>(entries.size());
-
-    std::vector<bool> used(n, false);
-    std::vector<Matchup> new_games;
-
-    auto add_game_for_team = [&](int team) {
-        if (team < 0 || team >= n || used[team]) return;
-
-        int opponent = entries[team].opponent;
-
-        if (opponent < 0 || opponent >= n || used[opponent]) return;
-
-        bool team_home = entries[team].is_home;
-        bool opponent_home = entries[opponent].is_home;
-
-        int home;
-        int away;
-
-        if (team_home != opponent_home) {
-            // Both teams agree about home/away.
-            if (team_home) {
-                home = team;
-                away = opponent;
-            } else {
-                home = opponent;
-                away = team;
-            }
-        } else {
-            // Conflict. Preserve this team's location.
-            if (team_home) {
-                home = team;
-                away = opponent;
-            } else {
-                home = opponent;
-                away = team;
-            }
-        }
-
-        new_games.push_back(Matchup{home, away});
-        used[team] = true;
-        used[opponent] = true;
-    };
-
-    // Preserve the chosen team's location first.
-    if (preferred_team >= 0 && preferred_team < n) {
-        add_game_for_team(preferred_team);
-    }
-
-    for (int team = 0; team < n; team++) {
-        add_game_for_team(team);
-    }
-
-    round.games = new_games;
-}
 
 void match_round_swap(Schedule& schedule, int team, int r1, int r2) {
     int num_rounds = get_num_rounds(schedule);
