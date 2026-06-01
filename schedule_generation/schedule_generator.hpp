@@ -6,7 +6,9 @@
 #include <random>
 #include <vector>
 
-#include "schedule.hpp"
+#include "../mutation_analysis/schedule.hpp"
+
+//to compile: g++ -std=c++17 main.cpp ../mutation_analysis/schedule.cpp -o run -O3 -Wall -Wextra
 
 enum class GenerationMethod {
     DFS,
