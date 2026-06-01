@@ -4,19 +4,15 @@
 #include <algorithm>
 #include <optional>
 #include <random>
-#include <string>
 #include <vector>
 
-struct Match {
-    int home;
-    int away;
+#include "schedule.hpp"
 
-    bool operator==(const Match& other) const {
-        return home == other.home && away == other.away;
-    }
+enum class GenerationMethod {
+    DFS,
+    RandDFS,
+    RandomRestart
 };
-
-using Schedule = std::vector<Match>;
 
 struct StreakState {
     int home_left;
@@ -25,19 +21,17 @@ struct StreakState {
     bool last_was_home;
 };
 
-enum class GenerationMethod {
-    DFS,
-    RandDFS,
-    RandRestart
-};
+inline bool same_matchup(const Matchup& a, const Matchup& b) {
+    return a.home == b.home && a.away == b.away;
+}
 
-inline std::vector<Match> generate_matchups(int n, std::mt19937& rng) {
-    std::vector<Match> matchups;
+inline std::vector<Matchup> generate_matchups(int n, std::mt19937& rng) {
+    std::vector<Matchup> matchups;
 
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            if (i != j) {
-                matchups.push_back({i, j});
+    for (int home = 0; home < n; ++home) {
+        for (int away = 0; away < n; ++away) {
+            if (home != away) {
+                matchups.push_back({home, away});
             }
         }
     }
@@ -49,51 +43,64 @@ inline std::vector<Match> generate_matchups(int n, std::mt19937& rng) {
 inline std::vector<StreakState> generate_streak_count(int n) {
     std::vector<StreakState> streaks(n);
 
-    for (int i = 0; i < n; ++i) {
-        streaks[i] = {
-            n - 1,  // home games left
-            n - 1,  // away games left
-            0,      // current streak length
-            true    // same as Python's initial "home"
-        };
+    for (int team = 0; team < n; ++team) {
+        streaks[team] = {n - 1, n - 1, 0, true};
     }
 
     return streaks;
 }
 
+inline Schedule matchups_to_schedule(const std::vector<Matchup>& scheduled_matchups, int n) {
+    Schedule schedule;
+    int games_per_round = n / 2;
+
+    for (int i = 0; i < static_cast<int>(scheduled_matchups.size()); i += games_per_round) {
+        Round round;
+
+        for (int j = 0; j < games_per_round; ++j) {
+            round.games.push_back(scheduled_matchups[i + j]);
+        }
+
+        schedule.rounds.push_back(round);
+    }
+
+    return schedule;
+}
+
 inline bool prevent_back_to_back(
-    const Match& m,
-    const std::vector<Match>& previous_round
+    const Matchup& matchup,
+    const std::vector<Matchup>& previous_round
 ) {
-    for (const Match& p : previous_round) {
-        if (p.home == m.away && p.away == m.home) {
+    for (const Matchup& previous : previous_round) {
+        if (previous.home == matchup.away && previous.away == matchup.home) {
             return true;
         }
     }
+
     return false;
 }
 
 inline bool prevent_four_in_a_row(
-    const Match& m,
+    const Matchup& matchup,
     const std::vector<StreakState>& streaks
 ) {
-    const StreakState& home_team = streaks[m.home];
-    const StreakState& away_team = streaks[m.away];
+    const StreakState& home_team = streaks[matchup.home];
+    const StreakState& away_team = streaks[matchup.away];
 
     bool home_team_has_three_home =
-        home_team.streak_length == 3 && home_team.last_was_home;
+        home_team.streak_length == MAX_STREAK && home_team.last_was_home;
 
     bool away_team_has_three_away =
-        away_team.streak_length == 3 && !away_team.last_was_home;
+        away_team.streak_length == MAX_STREAK && !away_team.last_was_home;
 
     return home_team_has_three_home || away_team_has_three_away;
 }
 
 inline bool check_future_streak_violation(
-    const Match& m,
+    const Matchup& matchup,
     const std::vector<StreakState>& streaks
 ) {
-    const StreakState& home_team = streaks[m.home];
+    const StreakState& home_team = streaks[matchup.home];
 
     int home_left_after = home_team.home_left - 1;
     int away_left_after = home_team.away_left;
@@ -106,11 +113,11 @@ inline bool check_future_streak_violation(
         s = home_team.streak_length;
     }
 
-    if ((x + s) / 3.0 > y + 1) {
+    if ((x + s) / static_cast<double>(MAX_STREAK) > y + 1) {
         return true;
     }
 
-    const StreakState& away_team = streaks[m.away];
+    const StreakState& away_team = streaks[matchup.away];
 
     home_left_after = away_team.home_left;
     away_left_after = away_team.away_left - 1;
@@ -123,7 +130,7 @@ inline bool check_future_streak_violation(
         s = away_team.streak_length;
     }
 
-    if ((x + s) / 3.0 > y + 1) {
+    if ((x + s) / static_cast<double>(MAX_STREAK) > y + 1) {
         return true;
     }
 
@@ -131,10 +138,10 @@ inline bool check_future_streak_violation(
 }
 
 inline void update_streaks(
-    const Match& m,
+    const Matchup& matchup,
     std::vector<StreakState>& streaks
 ) {
-    StreakState& home_team = streaks[m.home];
+    StreakState& home_team = streaks[matchup.home];
 
     home_team.home_left--;
 
@@ -145,7 +152,7 @@ inline void update_streaks(
         home_team.last_was_home = true;
     }
 
-    StreakState& away_team = streaks[m.away];
+    StreakState& away_team = streaks[matchup.away];
 
     away_team.away_left--;
 
@@ -158,17 +165,19 @@ inline void update_streaks(
 }
 
 inline bool check_repeat_in_current_round(
-    const Match& m,
-    const std::vector<Match>& current_round
+    const Matchup& matchup,
+    const std::vector<Matchup>& current_round
 ) {
-    for (const Match& p : current_round) {
-        if (
-            m.home == p.home ||
-            m.home == p.away ||
-            m.away == p.home ||
-            m.away == p.away ||
-            m.home < p.home
-        ) {
+    for (const Matchup& previous : current_round) {
+        bool team_already_used =
+            matchup.home == previous.home ||
+            matchup.home == previous.away ||
+            matchup.away == previous.home ||
+            matchup.away == previous.away;
+
+        bool breaks_round_order = matchup.home < previous.home;
+
+        if (team_already_used || breaks_round_order) {
             return true;
         }
     }
@@ -176,124 +185,149 @@ inline bool check_repeat_in_current_round(
     return false;
 }
 
+inline std::vector<Matchup> get_current_round(
+    const std::vector<Matchup>& scheduled_matchups,
+    int n
+) {
+    int games_per_round = n / 2;
+    int index = static_cast<int>(scheduled_matchups.size()) % games_per_round;
+
+    if (index == 0) {
+        return {};
+    }
+
+    return std::vector<Matchup>(
+        scheduled_matchups.end() - index,
+        scheduled_matchups.end()
+    );
+}
+
+inline std::vector<Matchup> get_previous_round(
+    const std::vector<Matchup>& scheduled_matchups,
+    int n
+) {
+    int games_per_round = n / 2;
+
+    if (static_cast<int>(scheduled_matchups.size()) < games_per_round) {
+        return {};
+    }
+
+    int index = static_cast<int>(scheduled_matchups.size()) % games_per_round;
+
+    int end_index;
+    if (index == 0) {
+        end_index = static_cast<int>(scheduled_matchups.size());
+    } else {
+        end_index = static_cast<int>(scheduled_matchups.size()) - index;
+    }
+
+    int start_index = end_index - games_per_round;
+
+    return std::vector<Matchup>(
+        scheduled_matchups.begin() + start_index,
+        scheduled_matchups.begin() + end_index
+    );
+}
+
 inline bool check_constraints(
-    const Schedule& schedule,
+    const std::vector<Matchup>& scheduled_matchups,
     const std::vector<StreakState>& streaks,
     int n,
-    const Match& m
+    const Matchup& matchup
 ) {
-    int matches_per_round = n / 2;
-    int index = static_cast<int>(schedule.size()) % matches_per_round;
+    std::vector<Matchup> current_round = get_current_round(scheduled_matchups, n);
+    std::vector<Matchup> previous_round = get_previous_round(scheduled_matchups, n);
 
-    std::vector<Match> current_round;
-    if (index > 0) {
-        current_round.insert(
-            current_round.end(),
-            schedule.end() - index,
-            schedule.end()
-        );
-    }
-
-    std::vector<Match> previous_round;
-    if (static_cast<int>(schedule.size()) >= matches_per_round) {
-        int end_index = static_cast<int>(schedule.size()) - index;
-        int start_index = end_index - matches_per_round;
-
-        if (index == 0) {
-            start_index = static_cast<int>(schedule.size()) - matches_per_round;
-            end_index = static_cast<int>(schedule.size());
-        }
-
-        previous_round.insert(
-            previous_round.end(),
-            schedule.begin() + start_index,
-            schedule.begin() + end_index
-        );
-    }
-
-    if (check_repeat_in_current_round(m, current_round)) {
+    if (check_repeat_in_current_round(matchup, current_round)) {
         return true;
     }
 
-    if (!previous_round.empty() && prevent_back_to_back(m, previous_round)) {
+    if (!previous_round.empty() && prevent_back_to_back(matchup, previous_round)) {
         return true;
     }
 
-    if (prevent_four_in_a_row(m, streaks)) {
+    if (prevent_four_in_a_row(matchup, streaks)) {
         return true;
     }
 
-    if (check_future_streak_violation(m, streaks)) {
+    if (check_future_streak_violation(matchup, streaks)) {
         return true;
     }
 
     return false;
 }
 
-inline std::vector<Match> remove_matchup(
-    const std::vector<Match>& matchups,
-    const Match& chosen
+inline std::vector<Matchup> remove_matchup(
+    const std::vector<Matchup>& matchups,
+    const Matchup& chosen
 ) {
-    std::vector<Match> result;
+    std::vector<Matchup> result;
     result.reserve(matchups.size() - 1);
 
-    for (const Match& m : matchups) {
-        if (!(m == chosen)) {
-            result.push_back(m);
+    for (const Matchup& matchup : matchups) {
+        if (!same_matchup(matchup, chosen)) {
+            result.push_back(matchup);
         }
     }
 
     return result;
 }
 
-inline std::vector<Match> get_legal_moves(
-    const Schedule& schedule,
-    const std::vector<Match>& remaining_matchups,
+inline std::vector<Matchup> get_legal_moves(
+    const std::vector<Matchup>& scheduled_matchups,
+    const std::vector<Matchup>& remaining_matchups,
     const std::vector<StreakState>& streaks,
     int n
 ) {
-    std::vector<Match> legal;
+    std::vector<Matchup> legal_moves;
 
-    for (const Match& m : remaining_matchups) {
-        if (!check_constraints(schedule, streaks, n, m)) {
-            legal.push_back(m);
+    for (const Matchup& matchup : remaining_matchups) {
+        if (!check_constraints(scheduled_matchups, streaks, n, matchup)) {
+            legal_moves.push_back(matchup);
         }
     }
 
-    return legal;
+    return legal_moves;
 }
 
 inline bool dfs_one_schedule(
     int n,
-    const std::vector<Match>& remaining_matchups,
+    const std::vector<Matchup>& remaining_matchups,
     const std::vector<StreakState>& streaks,
-    const Schedule& schedule,
+    const std::vector<Matchup>& scheduled_matchups,
     Schedule& result
 ) {
     if (remaining_matchups.empty()) {
-        result = schedule;
-        return true;
+        Schedule completed = matchups_to_schedule(scheduled_matchups, n);
+        ViolationCounts violations = evaluate_schedule(completed);
+
+        if (is_feasible(violations)) {
+            result = completed;
+            return true;
+        }
+
+        return false;
     }
 
-    for (const Match& m : remaining_matchups) {
-        if (check_constraints(schedule, streaks, n, m)) {
+    for (const Matchup& matchup : remaining_matchups) {
+        if (check_constraints(scheduled_matchups, streaks, n, matchup)) {
             continue;
         }
 
-        Schedule new_schedule = schedule;
-        new_schedule.push_back(m);
+        std::vector<Matchup> new_scheduled_matchups = scheduled_matchups;
+        new_scheduled_matchups.push_back(matchup);
 
-        std::vector<Match> new_remaining =
-            remove_matchup(remaining_matchups, m);
+        std::vector<Matchup> new_remaining_matchups =
+            remove_matchup(remaining_matchups, matchup);
 
         std::vector<StreakState> new_streaks = streaks;
-        update_streaks(m, new_streaks);
+        update_streaks(matchup, new_streaks);
 
         if (dfs_one_schedule(
                 n,
-                new_remaining,
+                new_remaining_matchups,
                 new_streaks,
-                new_schedule,
+                new_scheduled_matchups,
                 result
             )) {
             return true;
@@ -302,3 +336,147 @@ inline bool dfs_one_schedule(
 
     return false;
 }
+
+inline bool rand_dfs_one_schedule(
+    int n,
+    const std::vector<Matchup>& remaining_matchups,
+    const std::vector<StreakState>& streaks,
+    const std::vector<Matchup>& scheduled_matchups,
+    Schedule& result,
+    std::mt19937& rng
+) {
+    if (remaining_matchups.empty()) {
+        Schedule completed = matchups_to_schedule(scheduled_matchups, n);
+        ViolationCounts violations = evaluate_schedule(completed);
+
+        if (is_feasible(violations)) {
+            result = completed;
+            return true;
+        }
+
+        return false;
+    }
+
+    std::vector<Matchup> legal_moves =
+        get_legal_moves(scheduled_matchups, remaining_matchups, streaks, n);
+
+    std::shuffle(legal_moves.begin(), legal_moves.end(), rng);
+
+    for (const Matchup& matchup : legal_moves) {
+        std::vector<Matchup> new_scheduled_matchups = scheduled_matchups;
+        new_scheduled_matchups.push_back(matchup);
+
+        std::vector<Matchup> new_remaining_matchups =
+            remove_matchup(remaining_matchups, matchup);
+
+        std::vector<StreakState> new_streaks = streaks;
+        update_streaks(matchup, new_streaks);
+
+        if (rand_dfs_one_schedule(
+                n,
+                new_remaining_matchups,
+                new_streaks,
+                new_scheduled_matchups,
+                result,
+                rng
+            )) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline std::optional<Schedule> random_restart_one_schedule(
+    int n,
+    std::mt19937& rng,
+    int max_restart_attempts = 10000
+) {
+    for (int attempt = 0; attempt < max_restart_attempts; ++attempt) {
+        std::vector<Matchup> remaining_matchups = generate_matchups(n, rng);
+        std::vector<StreakState> streaks = generate_streak_count(n);
+        std::vector<Matchup> scheduled_matchups;
+
+        while (!remaining_matchups.empty()) {
+            std::vector<Matchup> legal_moves =
+                get_legal_moves(scheduled_matchups, remaining_matchups, streaks, n);
+
+            if (legal_moves.empty()) {
+                break;
+            }
+
+            std::uniform_int_distribution<int> distribution(
+                0,
+                static_cast<int>(legal_moves.size()) - 1
+            );
+
+            Matchup chosen = legal_moves[distribution(rng)];
+
+            scheduled_matchups.push_back(chosen);
+            update_streaks(chosen, streaks);
+            remaining_matchups = remove_matchup(remaining_matchups, chosen);
+        }
+
+        if (remaining_matchups.empty()) {
+            Schedule completed = matchups_to_schedule(scheduled_matchups, n);
+            ViolationCounts violations = evaluate_schedule(completed);
+
+            if (is_feasible(violations)) {
+                return completed;
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
+inline std::optional<Schedule> generate_one_schedule(
+    int n,
+    GenerationMethod method,
+    std::mt19937& rng
+) {
+    if (method == GenerationMethod::DFS) {
+        std::vector<Matchup> matchups = generate_matchups(n, rng);
+        std::vector<StreakState> streaks = generate_streak_count(n);
+        std::vector<Matchup> scheduled_matchups;
+        Schedule result;
+
+        bool success = dfs_one_schedule(n, matchups, streaks, scheduled_matchups, result);
+
+        if (success) {
+            return result;
+        }
+
+        return std::nullopt;
+    }
+
+    if (method == GenerationMethod::RandDFS) {
+        std::vector<Matchup> matchups = generate_matchups(n, rng);
+        std::vector<StreakState> streaks = generate_streak_count(n);
+        std::vector<Matchup> scheduled_matchups;
+        Schedule result;
+
+        bool success = rand_dfs_one_schedule(
+            n,
+            matchups,
+            streaks,
+            scheduled_matchups,
+            result,
+            rng
+        );
+
+        if (success) {
+            return result;
+        }
+
+        return std::nullopt;
+    }
+
+    if (method == GenerationMethod::RandomRestart) {
+        return random_restart_one_schedule(n, rng);
+    }
+
+    return std::nullopt;
+}
+
+#endif
