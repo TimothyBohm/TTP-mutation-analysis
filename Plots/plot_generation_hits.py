@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 # ── Configuration ─────────────────────────────────────────
-FILE = "../Schedules/Schedules_ALL/ALL-8.csv"
+FILE = "../Schedules/Schedules_ALL_R/ALL_R-4.csv"
 TOP_N = 160
-OUTPUT = "graphs/generation_frequency_8.png"
+OUTPUT = "graphs/generation_frequency_4.png"
 # ─────────────────────────────────────────────────────────
 
 # Read raw schedules, one schedule per line
@@ -64,7 +64,7 @@ ax.set_ylabel(
 
 ax.set_title(
     "Most Frequently Generated Schedules\n"
-    "(8 Teams)",
+    "(4 Teams)",
     fontsize=20,
     fontweight="bold",
     color="#1A252F",
