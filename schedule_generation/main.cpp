@@ -17,6 +17,21 @@ GenerationMethod parse_method(const std::string& method_name) {
     std::exit(1);
 }
 
+void save_schedule(std::ofstream& file, const Schedule& schedule) {
+    bool first = true;
+
+    for (const Round& round : schedule.rounds) {
+        for (const Matchup& matchup : round.games) {
+            if (!first) file << " ";
+
+            file << matchup.home << "," << matchup.away;
+            first = false;
+        }
+    }
+
+    file << "\n";
+}
+
 int main(int argc, char* argv[]) {
     //default values if they are not parsed from command line arguments
     int teams = argc > 1 ? std::stoi(argv[1]) : 8;
