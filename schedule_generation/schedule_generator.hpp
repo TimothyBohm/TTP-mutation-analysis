@@ -292,6 +292,23 @@ inline std::vector<Matchup> get_legal_moves(
     return legal_moves;
 }
 
+inline void apply_normalization(
+    int n,
+    std::vector<Matchup>& remaining_matchups,
+    std::vector<StreakState>& streaks,
+    std::vector<Matchup>& scheduled_matchups
+) {
+    for (int team = 0; team < n; team += 2) {
+        Matchup fixed_matchup{team, team + 1};
+
+        scheduled_matchups.push_back(fixed_matchup);
+
+        remaining_matchups = remove_matchup(remaining_matchups, fixed_matchup);
+
+        update_streaks(fixed_matchup, streaks);
+    }
+}
+
 inline bool dfs_one_schedule(
     int n,
     const std::vector<Matchup>& remaining_matchups,
@@ -399,6 +416,8 @@ inline std::optional<Schedule> random_restart_one_schedule(
         std::vector<StreakState> streaks = generate_streak_count(n);
         std::vector<Matchup> scheduled_matchups;
 
+        apply_normalization(n, remaining_matchups, streaks, scheduled_matchups);
+
         while (!remaining_matchups.empty()) {
             std::vector<Matchup> legal_moves =
                 get_legal_moves(scheduled_matchups, remaining_matchups, streaks, n);
@@ -441,6 +460,9 @@ inline std::optional<Schedule> generate_one_schedule(
         std::vector<Matchup> matchups = generate_matchups(n, rng);
         std::vector<StreakState> streaks = generate_streak_count(n);
         std::vector<Matchup> scheduled_matchups;
+
+
+        apply_normalization(n, matchups, streaks, scheduled_matchups);
         Schedule result;
 
         bool success = dfs_one_schedule(n, matchups, streaks, scheduled_matchups, result);
@@ -456,6 +478,8 @@ inline std::optional<Schedule> generate_one_schedule(
         std::vector<Matchup> matchups = generate_matchups(n, rng);
         std::vector<StreakState> streaks = generate_streak_count(n);
         std::vector<Matchup> scheduled_matchups;
+
+        apply_normalization(n, matchups, streaks, scheduled_matchups);
         Schedule result;
 
         bool success = rand_dfs_one_schedule(
