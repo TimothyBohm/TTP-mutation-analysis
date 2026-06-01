@@ -12,8 +12,7 @@
 
 enum class GenerationMethod {
     DFS,
-    RandDFS,
-    RandomRestart
+    RandDFS
 };
 
 struct StreakState {
@@ -406,52 +405,7 @@ inline bool rand_dfs_one_schedule(
     return false;
 }
 
-inline std::optional<Schedule> random_restart_one_schedule(
-    int n,
-    std::mt19937& rng,
-    int max_restart_attempts = 10000
-) {
-    for (int attempt = 0; attempt < max_restart_attempts; ++attempt) {
-        std::vector<Matchup> remaining_matchups = generate_matchups(n, rng);
-        std::vector<StreakState> streaks = generate_streak_count(n);
-        std::vector<Matchup> scheduled_matchups;
-
-        apply_normalization(n, remaining_matchups, streaks, scheduled_matchups);
-
-        while (!remaining_matchups.empty()) {
-            std::vector<Matchup> legal_moves =
-                get_legal_moves(scheduled_matchups, remaining_matchups, streaks, n);
-
-            if (legal_moves.empty()) {
-                break;
-            }
-
-            std::uniform_int_distribution<int> distribution(
-                0,
-                static_cast<int>(legal_moves.size()) - 1
-            );
-
-            Matchup chosen = legal_moves[distribution(rng)];
-
-            scheduled_matchups.push_back(chosen);
-            update_streaks(chosen, streaks);
-            remaining_matchups = remove_matchup(remaining_matchups, chosen);
-        }
-
-        if (remaining_matchups.empty()) {
-            Schedule completed = matchups_to_schedule(scheduled_matchups, n);
-            ViolationCounts violations = evaluate_schedule(completed);
-
-            if (is_feasible(violations)) {
-                return completed;
-            }
-        }
-    }
-
-    return std::nullopt;
-}
-
-inline std::optional<Schedule> generate_one_schedule(
+inline Schedule generate_one_schedule(
     int n,
     GenerationMethod method,
     std::mt19937& rng
@@ -467,11 +421,13 @@ inline std::optional<Schedule> generate_one_schedule(
 
         bool success = dfs_one_schedule(n, matchups, streaks, scheduled_matchups, result);
 
-        if (success) {
-            return result;
+        if (!success) {
+            throw std::runtime_error(
+                "DFS failed to generate a schedule"
+            );
         }
 
-        return std::nullopt;
+        return result;
     }
 
     if (method == GenerationMethod::RandDFS) {
@@ -491,18 +447,15 @@ inline std::optional<Schedule> generate_one_schedule(
             rng
         );
 
-        if (success) {
-            return result;
+        if (!success) {
+            throw std::runtime_error(
+                "Randomized DFS failed to generate a schedule"
+            );
         }
-
-        return std::nullopt;
+        return result;
     }
 
-    if (method == GenerationMethod::RandomRestart) {
-        return random_restart_one_schedule(n, rng);
-    }
-
-    return std::nullopt;
+    throw std::runtime_error("Unknown generation method");
 }
 
 #endif

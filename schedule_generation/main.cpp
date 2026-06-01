@@ -10,10 +10,9 @@
 GenerationMethod parse_method(const std::string& method_name) {
     if (method_name == "dfs") return GenerationMethod::DFS;
     if (method_name == "randdfs") return GenerationMethod::RandDFS;
-    if (method_name == "restart") return GenerationMethod::RandomRestart;
 
     std::cerr << "[ERROR] Unknown generation method: " << method_name << "\n";
-    std::cerr << "Available methods: dfs, randdfs, restart\n";
+    std::cerr << "Available methods: dfs, randdfs\n";
     std::exit(1);
 }
 
@@ -49,10 +48,12 @@ int main(int argc, char* argv[]) {
         std::cerr << "[ERROR] Number of schedules must be greater than 0.\n";
         return 1;
     }
-
+    
+    //parse method and initialize random number generator
     GenerationMethod method = parse_method(method_name);
     std::mt19937 rng(seed);
 
+    //open output file for writing schedules
     std::ofstream output_file(output_path);
     if (!output_file.is_open()) {
         std::cerr << "[ERROR] Could not open output file: " << output_path << "\n";
@@ -64,32 +65,19 @@ int main(int argc, char* argv[]) {
               << " teams using method '" << method_name << "'\n";
 
     int generated = 0;
-    int failed_attempts = 0;
 
+    //main generation loop
     while (generated < number_of_schedules) {
-        std::optional<Schedule> schedule =
-            generate_one_schedule(teams, method, rng);
-
-        if (!schedule.has_value()) {
-            failed_attempts++;
-
-            if (failed_attempts > 10000) {
-                std::cerr << "[ERROR] Too many failed generation attempts.\n";
-                return 1;
-            }
-
-            continue;
-        }
-
-        ViolationCounts violations = evaluate_schedule(schedule.value());
+        Schedule schedule = generate_one_schedule(teams, method, rng);
+        ViolationCounts violations = evaluate_schedule(schedule);
 
         if (!is_feasible(violations)) {
             std::cerr << "[ERROR] Generated infeasible schedule.\n";
-            print_violations("Invalid generated schedule", schedule.value());
+            print_violations("Invalid generated schedule", schedule);
             return 1;
         }
 
-        save_schedule(output_file, schedule.value());
+        save_schedule(output_file, schedule);
         generated++;
 
         if (generated % 100 == 0) {
