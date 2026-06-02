@@ -2,7 +2,6 @@
 #define SCHEDULE_GENERATOR_HPP
 
 #include <algorithm>
-#include <optional>
 #include <random>
 #include <vector>
 

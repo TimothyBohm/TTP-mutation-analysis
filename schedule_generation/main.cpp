@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <random>
 #include <string>
 
@@ -87,7 +86,6 @@ int main(int argc, char* argv[]) {
 
     std::cout << "\nDone.\n";
     std::cout << "Generated: " << generated << "\n";
-    std::cout << "Failed attempts: " << failed_attempts << "\n";
 
     return 0;
 }
