@@ -6,7 +6,32 @@
 
 #include "schedule_generator.hpp"
 
+/*
+===============================================================================
+Random Schedule Generator
 
+Compile:
+    g++ -std=c++17 main.cpp ../mutation_analysis/schedule.cpp -o run -O3 -Wall -Wextra
+
+Command line arguments:
+    ./run [teams] [num_schedules] [output_file] [method] [seed] [--append]
+
+Arguments:
+    teams           Number of teams (must be even and >= 4)
+    num_schedules   Number of schedules to generate
+    output_file     CSV file to save schedules
+    method          methods: dfs or randdfs
+    seed            Random seed (optional, default = 42)
+    --append        Append schedules to existing file instead of overwriting
+
+Examples:
+    Generate 1000 schedules for 6 teams using DFS:
+        ./run 6 1000 dfs/schedules_6.csv dfs
+
+    Append 1,000 additional schedules to an existing file:
+        ./run 8 1000 rand_dfs/schedules_8.csv randdfs 42 --append
+===============================================================================
+*/
 
 GenerationMethod parse_method(const std::string& method_name) {
     if (method_name == "dfs") return GenerationMethod::DFS;
