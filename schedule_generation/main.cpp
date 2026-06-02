@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <chrono>
 
 #include "schedule_generator.hpp"
 
@@ -113,6 +114,9 @@ int main(int argc, char* argv[]) {
 
     int generated = 0;
 
+    //time the generation process
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     // main generation loop
     while (generated < number_of_schedules) {
         Schedule schedule = generate_one_schedule(teams, method, rng);
@@ -132,8 +136,14 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    double elapsed_seconds = std::chrono::duration<double>(end_time - start_time).count();
+
     std::cout << "\nDone.\n";
     std::cout << "Generated: " << generated << "\n";
+    std::cout << "Elapsed time: " << elapsed_seconds << " seconds\n";
+    std::cout << "Schedules per second: " << generated / elapsed_seconds << "\n";
 
     return 0;
 }
