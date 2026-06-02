@@ -24,7 +24,7 @@ Implemented mutation operators include:
 
 ---
 
-### Generate Schedules
+### Python Schedule Generation
 
 The repository includes the original DFS-based TTP schedule generator from the TTP-DFS project.
 
@@ -34,6 +34,33 @@ Generates all normalized (-N) schedules for `n=4` and saves them to the folder `
 python3 run.py -N -s=All 4
 ```
 
+---
+
+### Python Schedule Generation
+
+The repository also contains a C++ implementation of randomized schedule-generation algorithms.
+
+Compile: g++ -std=c++17 main.cpp ../mutation_analysis/schedule.cpp -o run -O3 -Wall -Wextra
+
+Command line arguments:
+    ./run [teams] [num_schedules] [output_file] [method] [seed] [--append]
+
+Arguments:
+    teams           Number of teams (must be even and >= 4)
+    num_schedules   Number of schedules to generate
+    output_file     CSV file to save schedules
+    method          methods: dfs or randdfs
+    seed            Random seed (optional, default = 42)
+    --append        Append schedules to existing file instead of overwriting
+
+Examples:
+    Generate 1000 schedules for 6 teams using DFS:
+        ./run 6 1000 dfs/schedules_6.csv dfs
+
+    Append 1,000 additional schedules to an existing file:
+        ./run 8 1000 rand_dfs/schedules_8.csv randdfs 42 --append
+
+---
 
 ### Run Random Walk Experiments
 
