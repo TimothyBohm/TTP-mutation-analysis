@@ -88,7 +88,7 @@ ax.set_ylabel(
 
 ax.set_title(
     f"Most Frequently Generated Schedules\n"
-    f"(4 Teams, {TITLE_METHOD})",
+    f"(4 Teams)",
     fontsize=20,
     fontweight="bold",
     color="#1A252F",
