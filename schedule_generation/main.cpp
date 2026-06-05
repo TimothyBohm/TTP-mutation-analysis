@@ -4,6 +4,7 @@
 #include <random>
 #include <string>
 #include <chrono>
+#include <unordered_map>
 
 #include "schedule_generator.hpp"
 
@@ -58,6 +59,37 @@ void save_schedule(std::ofstream& file, const Schedule& schedule) {
     file << "\n";
 }
 
+std::string schedule_to_key(const Schedule& schedule) {
+    std::string key;
+
+    bool first = true;
+
+    for (const Round& round : schedule.rounds) {
+        for (const Matchup& matchup : round.games) {
+            if (!first) {
+                key += " ";
+            }
+
+            key += std::to_string(matchup.home);
+            key += ",";
+            key += std::to_string(matchup.away);
+
+            first = false;
+        }
+    }
+
+    return key;
+}
+
+void save_frequency_table(
+    std::ofstream& file,
+    const std::unordered_map<std::string, long long>& frequencies
+) {
+    for (const auto& entry : frequencies) {
+        file << entry.second << ";" << entry.first << "\n";
+    }
+}
+
 int main(int argc, char* argv[]) {
     // default values if they are not parsed from command line arguments
     int teams = argc > 1 ? std::stoi(argv[1]) : 8;
@@ -67,6 +99,7 @@ int main(int argc, char* argv[]) {
     unsigned int seed = argc > 5 ? static_cast<unsigned int>(std::stoul(argv[5])) : 42;
 
     bool append = false;
+    bool frequency = false;
 
     for (int i = 6; i < argc; ++i) {
         std::string arg = argv[i];
@@ -74,12 +107,16 @@ int main(int argc, char* argv[]) {
         if (arg == "--append") {
             append = true;
         }
+        else if (arg == "--frequency") {
+            frequency = true;
+        }
         else {
             std::cerr << "[ERROR] Unknown argument: " << arg << "\n";
             return 1;
         }
     }
 
+    //correct number of teams check
     if (teams < 4 || teams % 2 != 0) {
         std::cerr << "[ERROR] Number of teams must be even and at least 4.\n";
         return 1;
@@ -87,6 +124,10 @@ int main(int argc, char* argv[]) {
 
     if (number_of_schedules <= 0) {
         std::cerr << "[ERROR] Number of schedules must be greater than 0.\n";
+        return 1;
+    }
+    if (frequency && teams != 4) {
+        std::cerr << "[ERROR] --frequency is currently only supported for 4 teams.\n";
         return 1;
     }
 
@@ -112,10 +153,12 @@ int main(int argc, char* argv[]) {
     std::cout << "Generating " << number_of_schedules << " schedules for " << teams << " teams using method '"
               << method_name << "saved in the location: " << output_path << (append ? " (append)\n" : " (overwrite)\n");
 
-    int generated = 0;
 
     //time the generation process
     auto start_time = std::chrono::high_resolution_clock::now();
+
+    int generated = 0;
+    std::unordered_map<std::string, long long> schedule_frequencies;
 
     // main generation loop
     while (generated < number_of_schedules) {
@@ -128,7 +171,13 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        save_schedule(output_file, schedule);
+        if (frequency) {
+            std::string key = schedule_to_key(schedule);
+            schedule_frequencies[key]++;
+        }
+        else {
+            save_schedule(output_file, schedule);
+        }
         generated++;
 
         if (generated % 100 == 0) {
@@ -136,8 +185,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
+    if (frequency) {
+        save_frequency_table(output_file, schedule_frequencies);
+    }
 
+    auto end_time = std::chrono::high_resolution_clock::now();
     double elapsed_seconds = std::chrono::duration<double>(end_time - start_time).count();
 
     std::cout << "\nDone.\n";
