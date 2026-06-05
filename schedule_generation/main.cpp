@@ -25,6 +25,7 @@ Arguments:
     method          methods: dfs or randdfs
     seed            Random seed (optional, default = 42)
     --append        Append schedules to existing file instead of overwriting
+    --frequency     Instead of saving schedules, save frequency counts of unique schedules (only supported for 4 teams)
 
 Examples:
     Generate 1000 schedules for 6 teams using DFS:
