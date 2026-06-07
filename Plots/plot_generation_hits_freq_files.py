@@ -1,14 +1,15 @@
 from collections import defaultdict
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 from matplotlib.ticker import MaxNLocator
 
 # ── Configuration ─────────────────────────────────────────
 FILES = [
-    "../schedule_generation/dfs/schedules_4_frequency_1.csv",
-    "../schedule_generation/dfs/schedules_4_frequency_2.csv",
-    "../schedule_generation/dfs/schedules_4_frequency_3.csv",
-    "../schedule_generation/dfs/schedules_4_frequency_4.csv",
+    "../schedule_generation/rand_dfs/schedules_4_1.csv"
+    #"../schedule_generation/dfs/schedules_4_frequency_2.csv",
+    #"../schedule_generation/dfs/schedules_4_frequency_3.csv",
+    #"../schedule_generation/dfs/schedules_4_frequency_4.csv",
 ]
 
 TOP_N = 160
@@ -79,7 +80,7 @@ ax.set_xlabel(
 )
 
 ax.set_ylabel(
-    "Frequency Count",
+    "Frequency count (thousands)",
     fontsize=16,
     fontweight="bold",
     color="#1A252F",
@@ -88,7 +89,7 @@ ax.set_ylabel(
 
 ax.set_title(
     f"Most Frequently Generated Schedules\n"
-    f"(4 Teams)",
+    f"(4 Teams, rand_dfs method)",
     fontsize=20,
     fontweight="bold",
     color="#1A252F",
@@ -97,6 +98,11 @@ ax.set_title(
 )
 
 ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+ax.yaxis.set_major_formatter(
+    FuncFormatter(lambda x, pos: f"{x/1000:.0f}k")
+)
+
 ax.set_xticks(list(x)[::5])
 
 ax.tick_params(axis="x", labelsize=11, colors="#2C3E50")
