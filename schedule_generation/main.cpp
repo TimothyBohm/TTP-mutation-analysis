@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
         }
         generated++;
 
-        if (generated % 100 == 0) {
+        if (generated % 1000 == 0) {
             std::cout << "Generated " << generated << " schedules\n";
         }
     }
