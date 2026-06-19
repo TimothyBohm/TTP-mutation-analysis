@@ -16,13 +16,13 @@ Compile:
     g++ -std=c++17 main.cpp ../mutation_analysis/schedule.cpp -o run -O3 -Wall -Wextra
 
 Command line arguments:
-    ./run [teams] [num_schedules] [output_file] [method] [seed] [--append]
+    ./run [teams] [num_schedules] [output_file] [method] [seed] [--append/--frequency]
 
 Arguments:
     teams           Number of teams (must be even and >= 4)
     num_schedules   Number of schedules to generate
     output_file     CSV file to save schedules
-    method          methods: dfs or randdfs
+    method          methods: dfs, randdfs, or rowsfirst
     seed            Random seed (optional, default = 42)
     --append        Append schedules to existing file instead of overwriting
     --frequency     Instead of saving schedules, save frequency counts of unique schedules (only supported for 4 teams)
@@ -39,9 +39,10 @@ Examples:
 GenerationMethod parse_method(const std::string& method_name) {
     if (method_name == "dfs") return GenerationMethod::DFS;
     if (method_name == "randdfs") return GenerationMethod::RandDFS;
+    if (method_name == "rowsfirst") return GenerationMethod::RowsFirst;
 
     std::cerr << "[ERROR] Unknown generation method: " << method_name << "\n";
-    std::cerr << "Available methods: dfs, randdfs\n";
+    std::cerr << "Available methods: dfs, randdfs, rowsfirst\n";
     std::exit(1);
 }
 
@@ -161,9 +162,12 @@ int main(int argc, char* argv[]) {
     int generated = 0;
     std::unordered_map<std::string, long long> schedule_frequencies;
 
+    //rows first generation statistics
+    GenerationStats stats;
+
     // main generation loop
     while (generated < number_of_schedules) {
-        Schedule schedule = generate_one_schedule(teams, method, rng);
+        Schedule schedule = generate_one_schedule(teams, method, rng, stats);
         ViolationCounts violations = evaluate_schedule(schedule);
 
         if (!is_feasible(violations)) {
@@ -195,6 +199,11 @@ int main(int argc, char* argv[]) {
 
     std::cout << "\nDone.\n";
     std::cout << "Generated: " << generated << "\n";
+    if (method == GenerationMethod::RowsFirst) {
+        std::cout << "Attempts: " << stats.attempts << "\n";
+        std::cout << "Successful attempts: " << stats.successful_attempts << "\n";
+        std::cout << "Acceptance ratio: "<< static_cast<double>(stats.successful_attempts)/ stats.attempts<< "\n";
+    }
     std::cout << "Elapsed time: " << elapsed_seconds << " seconds\n";
     std::cout << "Schedules per second: " << generated / elapsed_seconds << "\n";
 
