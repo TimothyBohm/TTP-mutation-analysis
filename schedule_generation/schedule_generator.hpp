@@ -12,7 +12,14 @@
 
 enum class GenerationMethod {
     DFS,
-    RandDFS
+    RandDFS,
+    RowsFirst
+};
+
+struct GenerationStats {
+    long long attempts = 0;
+    long long successful_attempts = 0;
+    double total_time_seconds = 0.0;
 };
 
 inline bool dfs_one_schedule(
@@ -112,10 +119,94 @@ inline bool rand_dfs_one_schedule(
     return false;
 }
 
+inline Round rows_first_one_round(
+    int n,
+    std::mt19937& rng
+) {
+    std::vector<int> teams;
+
+    for (int team = 0; team < n; ++team) {
+        teams.push_back(team);
+    }
+
+    std::shuffle(teams.begin(), teams.end(), rng);
+
+    Round round;
+
+    std::uniform_int_distribution<int> home_away_choice(0, 1);
+
+    for (int i = 0; i < n; i += 2) {
+        int team_a = teams[i];
+        int team_b = teams[i + 1];
+
+        if (home_away_choice(rng) == 0) {
+            round.games.push_back({team_a, team_b});
+        }
+        else {
+            round.games.push_back({team_b, team_a});
+        }
+    }
+
+    std::sort(
+        round.games.begin(),
+        round.games.end(),
+        [](const Matchup& a, const Matchup& b) {
+            return a.home < b.home;
+        }
+    );
+
+    return round;
+}
+
+inline Schedule rows_first_attempt_schedule(
+    int n,
+    std::mt19937& rng
+) {
+    Schedule schedule;
+
+    // Fixed normalized first round: (0,1), (2,3), (4,5), ...
+    Round first_round;
+
+    for (int team = 0; team < n; team += 2) {
+        first_round.games.push_back({team, team + 1});
+    }
+
+    schedule.rounds.push_back(first_round);
+
+    // Generate the remaining rounds randomly using rows-first generation
+    int number_of_rounds = 2 * (n - 1);
+
+    for (int round_index = 1; round_index < number_of_rounds; ++round_index) {
+        Round round = rows_first_one_round(n, rng);
+        schedule.rounds.push_back(round);
+    }
+
+    return schedule;
+}
+
+inline Schedule rows_first_one_schedule(
+    int n,
+    std::mt19937& rng,
+    GenerationStats& stats
+) {
+    while (true) {
+    stats.attempts++;
+
+    Schedule schedule = rows_first_attempt_schedule(n, rng);
+    ViolationCounts violations = evaluate_schedule(schedule);
+
+    if (is_feasible(violations)) {
+        stats.successful_attempts++;
+        return schedule;
+    }
+}
+}
+
 inline Schedule generate_one_schedule(
     int n,
     GenerationMethod method,
-    std::mt19937& rng
+    std::mt19937& rng,
+    GenerationStats& stats
 ) {
     if (method == GenerationMethod::DFS) {
         std::vector<StreakState> streaks = generate_streak_count(n);
@@ -162,6 +253,14 @@ inline Schedule generate_one_schedule(
         }
         return result;
     }
+
+    if (method == GenerationMethod::RowsFirst) {
+    return rows_first_one_schedule(
+        n,
+        rng,
+        stats
+    );
+}
 
     throw std::runtime_error("Unknown generation method");
 }
