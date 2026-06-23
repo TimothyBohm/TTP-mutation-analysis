@@ -22,7 +22,7 @@ Arguments:
     teams           Number of teams (must be even and >= 4)
     num_schedules   Number of schedules to generate
     output_file     CSV file to save schedules
-    method          methods: dfs, randdfs, or rowsfirst
+    method          methods: dfs, randdfs, rowsfirst, or roundranddfs
     seed            Random seed (optional, default = 42)
     --append        Append schedules to existing file instead of overwriting
     --frequency     Instead of saving schedules, save frequency counts of unique schedules (only supported for 4 teams)
@@ -40,9 +40,10 @@ GenerationMethod parse_method(const std::string& method_name) {
     if (method_name == "dfs") return GenerationMethod::DFS;
     if (method_name == "randdfs") return GenerationMethod::RandDFS;
     if (method_name == "rowsfirst") return GenerationMethod::RowsFirst;
+    if (method_name == "roundranddfs") return GenerationMethod::RoundRandDFS;
 
     std::cerr << "[ERROR] Unknown generation method: " << method_name << "\n";
-    std::cerr << "Available methods: dfs, randdfs, rowsfirst\n";
+    std::cerr << "Available methods: dfs, randdfs, rowsfirst, roundranddfs\n";
     std::exit(1);
 }
 

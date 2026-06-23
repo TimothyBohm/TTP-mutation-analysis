@@ -14,6 +14,31 @@ struct StreakState {
     bool last_was_home;
 };
 
+inline void print_partial_schedule(
+    const Schedule& schedule,
+    int depth,
+    const std::string& action
+) {
+    std::cout << "\n[" << action << "] depth = " << depth << "\n";
+
+    for (int r = 0; r < static_cast<int>(schedule.rounds.size()); ++r) {
+        std::cout << "Round " << (r + 1) << ": ";
+
+        if (schedule.rounds[r].games.empty()) {
+            std::cout << "(empty)";
+        }
+        else {
+            for (const Matchup& matchup : schedule.rounds[r].games) {
+                std::cout << matchup.home << "," << matchup.away << " ";
+            }
+        }
+
+        std::cout << "\n";
+    }
+
+    std::cout << "----------------------------------------\n";
+}
+
 inline bool same_matchup(const Matchup& a, const Matchup& b) {
     return a.home == b.home && a.away == b.away;
 }
@@ -54,6 +79,89 @@ inline std::vector<StreakState> generate_streak_count(int n) {
     }
 
     return streaks;
+}
+
+inline Schedule create_normalized_empty_schedule(int n) {
+    Schedule schedule;
+
+    int number_of_rounds = 2 * (n - 1);
+
+    schedule.rounds.resize(number_of_rounds);
+
+    // Fill normalized first round: (0,1), (2,3), (4,5), ...
+    for (int team = 0; team < n; team += 2) {
+        schedule.rounds[0].games.push_back({team, team + 1});
+    }
+
+    return schedule;
+}
+
+inline std::vector<int> generate_round_insertion_order(
+    int n,
+    std::mt19937& rng
+) {
+    std::vector<int> insertion_order;
+
+    int number_of_rounds = 2 * (n - 1);
+    int games_per_round = n / 2;
+
+    // Round 0 is normalized/fixed, so we only fill rounds 1 to number_of_rounds - 1
+    for (int round_index = 1; round_index < number_of_rounds; ++round_index) {
+        for (int game = 0; game < games_per_round; ++game) {
+            insertion_order.push_back(round_index);
+        }
+    }
+
+    std::shuffle(
+        insertion_order.begin(),
+        insertion_order.end(),
+        rng
+    );
+
+    return insertion_order;
+}
+
+inline bool team_already_in_round(
+    const Round& round,
+    const Matchup& matchup
+) {
+    for (const Matchup& existing : round.games) {
+        if (
+            matchup.home == existing.home ||
+            matchup.home == existing.away ||
+            matchup.away == existing.home ||
+            matchup.away == existing.away
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+inline std::vector<Matchup> get_legal_moves_for_round(
+    const Schedule& partial_schedule,
+    const std::vector<Matchup>& remaining_matchups,
+    int round_index,
+    int n
+) {
+    std::vector<Matchup> legal_moves;
+
+    const Round& round = partial_schedule.rounds[round_index];
+
+    int games_per_round = n / 2;
+
+    if (static_cast<int>(round.games.size()) >= games_per_round) {
+        return legal_moves;
+    }
+
+    for (const Matchup& matchup : remaining_matchups) {
+        if (!team_already_in_round(round, matchup)) {
+            legal_moves.push_back(matchup);
+        }
+    }
+
+    return legal_moves;
 }
 
 inline Schedule matchups_to_schedule(const std::vector<Matchup>& scheduled_matchups, int n) {

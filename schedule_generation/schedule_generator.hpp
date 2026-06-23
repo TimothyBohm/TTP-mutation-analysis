@@ -13,7 +13,8 @@
 enum class GenerationMethod {
     DFS,
     RandDFS,
-    RowsFirst
+    RowsFirst,
+    RoundRandDFS
 };
 
 struct GenerationStats {
@@ -202,6 +203,122 @@ inline Schedule rows_first_one_schedule(
 }
 }
 
+inline bool round_rand_dfs_one_schedule(
+    int n,
+    const std::vector<int>& insertion_order,
+    int depth,
+    const std::vector<Matchup>& remaining_matchups,
+    const Schedule& partial_schedule,
+    Schedule& result,
+    std::mt19937& rng
+) {
+    if (depth == static_cast<int>(insertion_order.size())) {
+        ViolationCounts violations = evaluate_schedule(partial_schedule);
+
+        if (is_feasible(violations)) {
+            result = partial_schedule;
+            return true;
+        }
+
+        return false;
+    }
+
+    int round_index = insertion_order[depth];
+
+    std::vector<Matchup> legal_moves =
+        get_legal_moves_for_round(
+            partial_schedule,
+            remaining_matchups,
+            round_index,
+            n
+        );
+
+    std::shuffle(
+        legal_moves.begin(),
+        legal_moves.end(),
+        rng
+    );
+
+    for (const Matchup& matchup : legal_moves) {
+        Schedule new_partial_schedule = partial_schedule;
+        new_partial_schedule.rounds[round_index].games.push_back(matchup);
+
+        std::sort(
+            new_partial_schedule.rounds[round_index].games.begin(),
+            new_partial_schedule.rounds[round_index].games.end(),
+            [](const Matchup& a, const Matchup& b) {
+                return a.home < b.home;
+            }
+        );
+
+        print_partial_schedule(
+            new_partial_schedule,
+            depth,
+            "INSERT matchup " + std::to_string(matchup.home) + "," +
+            std::to_string(matchup.away) + " into round " +
+            std::to_string(round_index + 1)
+        );
+
+        std::vector<Matchup> new_remaining_matchups =
+            remove_matchup(remaining_matchups, matchup);
+
+        if (round_rand_dfs_one_schedule(
+                n,
+                insertion_order,
+                depth + 1,
+                new_remaining_matchups,
+                new_partial_schedule,
+                result,
+                rng
+            )) {
+            return true;
+        }
+        print_partial_schedule(
+            partial_schedule,
+            depth,
+            "BACKTRACK from matchup " + std::to_string(matchup.home) + "," +
+            std::to_string(matchup.away) + " in round " +
+            std::to_string(round_index + 1)
+        );
+    }
+
+    return false;
+}
+
+inline Schedule generate_one_schedule_round_rand_dfs(
+    int n,
+    std::mt19937& rng
+) {
+    Schedule partial_schedule =
+        create_normalized_empty_schedule(n);
+
+    std::vector<int> insertion_order =
+        generate_round_insertion_order(n, rng);
+
+    std::vector<Matchup> remaining_matchups =
+        generate_matchups_after_normalization(n, rng);
+
+    Schedule result;
+
+    bool success = round_rand_dfs_one_schedule(
+        n,
+        insertion_order,
+        0,
+        remaining_matchups,
+        partial_schedule,
+        result,
+        rng
+    );
+
+    if (!success) {
+        throw std::runtime_error(
+            "Round-randomized DFS failed to generate a schedule"
+        );
+    }
+
+    return result;
+}
+
 inline Schedule generate_one_schedule(
     int n,
     GenerationMethod method,
@@ -252,6 +369,10 @@ inline Schedule generate_one_schedule(
             );
         }
         return result;
+    }
+
+    if (method == GenerationMethod::RoundRandDFS) {
+        return generate_one_schedule_round_rand_dfs(n, rng);
     }
 
     if (method == GenerationMethod::RowsFirst) {
